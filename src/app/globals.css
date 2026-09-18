@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fdf2f8; /* Soft pastel pink */
-  --foreground: #4a154b; /* Deep plum/pink for readable text */
+  --background: #fdf2f8; 
+  --foreground: #4a154b; 
   --gold: #d4af37;
-  --green: #8fbc8f; /* Dark sea green for floral accents */
+  --green: #8fbc8f; 
 }
 
 @theme inline {
@@ -12,14 +12,49 @@
   --color-foreground: var(--foreground);
   --color-gold: var(--gold);
   --color-floral-green: var(--green);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
+  --font-cursive: var(--font-cursive);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-  overflow: hidden; /* For iPad kiosk */
-  touch-action: none; /* Prevent pull-to-refresh */
+  font-family: var(--font-sans);
+  overflow: hidden; 
+  touch-action: none; 
+}
+
+/* Organic blob animations */
+@keyframes blob {
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
+.animate-blob {
+  animation: blob 7s infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+/* Organic Button Shapes */
+.organic-shape-1 {
+  border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+}
+.organic-shape-2 {
+  border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+}
+.organic-shape-3 {
+  border-radius: 50% 50% 40% 60% / 50% 60% 40% 50%;
+}
+
+.font-cursive {
+  font-family: var(--font-cursive);
 }

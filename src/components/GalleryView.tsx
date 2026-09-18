@@ -20,10 +20,10 @@ export default function GalleryView({ onClose }: GalleryViewProps) {
   return (
     <div className="w-full h-full flex flex-col bg-[#fdf2f8] z-50 p-8 overflow-y-auto">
       <div className="flex items-center mb-8">
-        <button onClick={onClose} className="p-4 bg-white text-[#4a154b] rounded-full shadow-md hover:bg-pink-50 mr-6 transition-colors border-2 border-[#d4af37]">
+        <button onClick={onClose} className="p-4 bg-white/60 text-[#4a154b] rounded-full shadow-md hover:bg-pink-100 mr-6 transition-colors border border-white/50 backdrop-blur-md">
           <ArrowLeft size={28} />
         </button>
-        <h2 className="text-5xl font-serif text-[#d4af37]">Event Gallery</h2>
+        <h2 className="text-7xl font-cursive text-[#d4af37] drop-shadow-md">Event Gallery</h2>
       </div>
 
       {loading ? (

@@ -179,8 +179,8 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
 
           {/* Footer Text */}
           <div className={`absolute bottom-4 left-0 w-full text-center z-10 ${frame === 'polaroid' ? 'bottom-12' : 'bottom-6'}`}>
-            <h1 className="text-3xl font-serif text-[#d4af37] drop-shadow-sm font-bold bg-white/50 inline-block px-4 py-1 rounded-full backdrop-blur-sm">Zaara's 17th Birthday</h1>
-            <p className="text-sm font-medium tracking-widest text-[#4a154b] mt-1">SEPTEMBER 20, 2026</p>
+            <h1 className="text-5xl font-cursive text-[#d4af37] drop-shadow-md font-bold bg-white/40 inline-block px-6 py-2 organic-shape-2 backdrop-blur-sm">Zaara's 17th Birthday</h1>
+            <p className="text-xs font-bold tracking-[0.2em] text-[#4a154b] mt-2 bg-white/40 inline-block px-4 py-1 rounded-full backdrop-blur-sm">SEPTEMBER 20, 2026</p>
           </div>
         </div>
 
