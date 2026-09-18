@@ -1,20 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Share, Home } from 'lucide-react';
-import { getPhotoLocally } from '../utils/db';
 
 interface ShareViewProps {
-  photoId: string;
+  image: string;
   onHome: () => void;
 }
 
-export default function ShareView({ photoId, onHome }: ShareViewProps) {
-  const [image, setImage] = useState<string | null>(null);
-
-  useEffect(() => {
-    getPhotoLocally(photoId).then(dataUrl => {
-      if (dataUrl) setImage(dataUrl);
-    });
-  }, [photoId]);
+export default function ShareView({ image, onHome }: ShareViewProps) {
 
   const handleShare = async () => {
     if (!image) return;

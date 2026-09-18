@@ -2,14 +2,14 @@
 
 import React, { useState, useRef } from 'react';
 import html2canvas from 'html2canvas';
-import { motion } from 'framer-motion';
+import { Rnd } from 'react-rnd';
 import { Type, Image as ImageIcon, Wand2, Crown, Flower2, Sparkles, Heart, Star, PartyPopper, Gift } from 'lucide-react';
 import { savePhotoLocally } from '../utils/db';
 
 interface PhotoEditorProps {
   photos: string[];
   mode: 'SINGLE' | 'STRIP';
-  onComplete: (photoId: string) => void;
+  onComplete: (dataUrl: string) => void;
   onCancel: () => void;
 }
 
@@ -17,25 +17,25 @@ type FilterType = 'none' | 'vintage' | 'bw' | 'vibrant';
 type FrameType = 'none' | 'polaroid' | 'minimal-gold' | 'soft-glow' | 'film';
 type StickerCategory = 'Glasses' | 'Decor' | 'Party';
 
-const STICKERS: Record<StickerCategory, { id: string, name: string, content: React.ReactNode }[]> = {
+const STICKERS: Record<StickerCategory, { id: string, name: string, content: React.ReactNode, width: number, height: number }> = {
   Glasses: [
-    { id: 'heart-glasses', name: 'Heart Shades', content: (
-      <svg width="200" height="90" viewBox="0 0 200 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+    { id: 'heart-glasses', name: 'Heart Shades', width: 200, height: 90, content: (
+      <svg viewBox="0 0 200 90" fill="none" xmlns="http://www.w3.org/2000/svg" style={{width: '100%', height: '100%'}}>
         <path d="M 50,80 Q 20,50 10,30 A 20,20 0 0,1 50,15 A 20,20 0 0,1 90,30 Q 80,50 50,80 Z" fill="rgba(255,20,147,0.4)" stroke="#ff1493" strokeWidth="6" strokeLinejoin="round"/>
         <path d="M 150,80 Q 120,50 110,30 A 20,20 0 0,1 150,15 A 20,20 0 0,1 190,30 Q 180,50 150,80 Z" fill="rgba(255,20,147,0.4)" stroke="#ff1493" strokeWidth="6" strokeLinejoin="round"/>
         <path d="M 90,25 Q 100,15 110,25" fill="none" stroke="#ff1493" strokeWidth="6" strokeLinecap="round"/>
       </svg>
     )},
-    { id: 'pink-shades', name: 'Pink Shades', content: (
-      <svg width="200" height="70" viewBox="0 0 200 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+    { id: 'pink-shades', name: 'Pink Shades', width: 200, height: 70, content: (
+      <svg viewBox="0 0 200 70" fill="none" xmlns="http://www.w3.org/2000/svg" style={{width: '100%', height: '100%'}}>
         <rect x="10" y="10" width="80" height="50" rx="15" fill="rgba(255,105,180,0.4)" stroke="#ff69b4" strokeWidth="6"/>
         <rect x="110" y="10" width="80" height="50" rx="15" fill="rgba(255,105,180,0.4)" stroke="#ff69b4" strokeWidth="6"/>
         <path d="M 90,30 Q 100,25 110,30" fill="none" stroke="#ff69b4" strokeWidth="6" strokeLinecap="round"/>
         <path d="M 10,30 L 0,30 M 190,30 L 200,30" stroke="#ff69b4" strokeWidth="6" strokeLinecap="round"/>
       </svg>
     )},
-    { id: 'dark-shades', name: 'Dark Shades', content: (
-      <svg width="200" height="70" viewBox="0 0 200 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+    { id: 'dark-shades', name: 'Dark Shades', width: 200, height: 70, content: (
+      <svg viewBox="0 0 200 70" fill="none" xmlns="http://www.w3.org/2000/svg" style={{width: '100%', height: '100%'}}>
         <rect x="10" y="10" width="80" height="50" rx="10" fill="rgba(0,0,0,0.7)" stroke="#333" strokeWidth="6"/>
         <rect x="110" y="10" width="80" height="50" rx="10" fill="rgba(0,0,0,0.7)" stroke="#333" strokeWidth="6"/>
         <path d="M 90,30 Q 100,25 110,30" fill="none" stroke="#333" strokeWidth="6" strokeLinecap="round"/>
@@ -43,35 +43,40 @@ const STICKERS: Record<StickerCategory, { id: string, name: string, content: Rea
     )}
   ],
   Decor: [
-    { id: 'flower', name: 'Flower', content: <Flower2 size={100} strokeWidth={1.5} color="#db2777" fill="#fbcfe8" /> },
-    { id: 'sparkles', name: 'Sparkles', content: <Sparkles size={100} strokeWidth={1.5} color="#d4af37" fill="#fef08a" /> },
-    { id: 'heart', name: 'Heart', content: <Heart size={100} strokeWidth={1.5} color="#e11d48" fill="#fda4af" /> },
-    { id: 'star', name: 'Star', content: <Star size={100} strokeWidth={1.5} color="#d4af37" fill="#fde047" /> }
+    { id: 'flower', name: 'Flower', width: 100, height: 100, content: <Flower2 className="w-full h-full" strokeWidth={1.5} color="#db2777" fill="#fbcfe8" /> },
+    { id: 'sparkles', name: 'Sparkles', width: 100, height: 100, content: <Sparkles className="w-full h-full" strokeWidth={1.5} color="#d4af37" fill="#fef08a" /> },
+    { id: 'heart', name: 'Heart', width: 100, height: 100, content: <Heart className="w-full h-full" strokeWidth={1.5} color="#e11d48" fill="#fda4af" /> },
+    { id: 'star', name: 'Star', width: 100, height: 100, content: <Star className="w-full h-full" strokeWidth={1.5} color="#d4af37" fill="#fde047" /> }
   ],
   Party: [
-    { id: 'crown', name: 'Crown', content: <Crown size={120} strokeWidth={1.5} color="#b8860b" fill="#ffd700" /> },
-    { id: 'popper', name: 'Popper', content: <PartyPopper size={100} strokeWidth={1.5} color="#ea580c" fill="#fdba74" /> },
-    { id: 'gift', name: 'Gift', content: <Gift size={100} strokeWidth={1.5} color="#4f46e5" fill="#a5b4fc" /> }
+    { id: 'crown', name: 'Crown', width: 120, height: 120, content: <Crown className="w-full h-full" strokeWidth={1.5} color="#b8860b" fill="#ffd700" /> },
+    { id: 'popper', name: 'Popper', width: 100, height: 100, content: <PartyPopper className="w-full h-full" strokeWidth={1.5} color="#ea580c" fill="#fdba74" /> },
+    { id: 'gift', name: 'Gift', width: 100, height: 100, content: <Gift className="w-full h-full" strokeWidth={1.5} color="#4f46e5" fill="#a5b4fc" /> }
   ]
 };
 
 export default function PhotoEditor({ photos, mode, onComplete, onCancel }: PhotoEditorProps) {
   const [filter, setFilter] = useState<FilterType>('none');
   const [frame, setFrame] = useState<FrameType>('none');
-  const [activeStickers, setActiveStickers] = useState<{id: string, content: React.ReactNode, key: number}[]>([]);
+  const [activeStickers, setActiveStickers] = useState<{id: string, content: React.ReactNode, key: number, w: number, h: number}[]>([]);
   const [activeCategory, setActiveCategory] = useState<StickerCategory>('Glasses');
   const [isProcessing, setIsProcessing] = useState(false);
   const captureRef = useRef<HTMLDivElement>(null);
   const [stickerCounter, setStickerCounter] = useState(0);
 
   const addSticker = (sticker: typeof STICKERS[StickerCategory][0]) => {
-    setActiveStickers([...activeStickers, { id: sticker.id, content: sticker.content, key: stickerCounter }]);
+    setActiveStickers([...activeStickers, { id: sticker.id, content: sticker.content, key: stickerCounter, w: sticker.width, h: sticker.height }]);
     setStickerCounter(stickerCounter + 1);
   };
 
   const handleComplete = async () => {
     if (!captureRef.current) return;
     setIsProcessing(true);
+    
+    // Briefly hide resize handles for the screenshot
+    const handles = document.querySelectorAll('.react-resizable-handle');
+    handles.forEach(h => (h as HTMLElement).style.display = 'none');
+    
     try {
       const canvas = await html2canvas(captureRef.current, {
         scale: 1.5,
@@ -79,12 +84,15 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
       });
       const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
       
-      const photoId = await savePhotoLocally(dataUrl);
-      onComplete(photoId);
+      // Save locally but DO NOT BLOCK on it
+      savePhotoLocally(dataUrl).catch(e => console.warn("Failed to save to local DB:", e));
+      
+      onComplete(dataUrl);
     } catch (err) {
       console.error("Save Error:", err);
       setIsProcessing(false);
-      alert("Failed to save photo locally.");
+      alert("Failed to render photo.");
+      handles.forEach(h => (h as HTMLElement).style.display = 'block');
     }
   };
 
@@ -146,7 +154,9 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
               <button key={s.id} onClick={() => addSticker(s)}
                 className="p-3 bg-white border border-pink-100 rounded-xl hover:border-pink-300 hover:shadow-md flex flex-col items-center justify-center transition-all"
               >
-                <div className="h-16 w-full flex items-center justify-center transform scale-50 origin-center">{s.content}</div>
+                <div className="h-16 w-full flex items-center justify-center pointer-events-none">
+                  <div style={{ width: s.width * 0.4, height: s.height * 0.4 }}>{s.content}</div>
+                </div>
                 <span className="text-xs text-gray-600 font-medium mt-1">{s.name}</span>
               </button>
             ))}
@@ -154,6 +164,7 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
         </div>
 
         <div className="pt-4 mt-auto border-t border-pink-100 flex flex-col gap-3">
+          <p className="text-xs text-center text-gray-400">Drag corners to resize stickers on the photo!</p>
           <button onClick={onCancel} className="w-full py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200">
             Retake Photo
           </button>
@@ -192,17 +203,28 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
             ))}
           </div>
 
-          <div className="absolute inset-0 z-20 pointer-events-none overflow-visible">
+          <div className="absolute inset-0 z-20 overflow-visible pointer-events-none">
             {activeStickers.map(sticker => (
-              <motion.div 
-                key={sticker.key} 
-                drag 
-                dragMomentum={false}
-                className="absolute inline-block cursor-grab active:cursor-grabbing pointer-events-auto filter drop-shadow-lg" 
-                style={{ top: '40%', left: '40%', touchAction: 'none' }}
+              <Rnd
+                key={sticker.key}
+                default={{
+                  x: 100,
+                  y: 100,
+                  width: sticker.w,
+                  height: sticker.h
+                }}
+                bounds="parent"
+                className="pointer-events-auto filter drop-shadow-lg"
+                lockAspectRatio
+                resizeHandleStyles={{
+                  bottomRight: { width: '16px', height: '16px', background: '#ff1493', border: '2px solid white', borderRadius: '50%', right: '-8px', bottom: '-8px' },
+                  bottomLeft: { width: '16px', height: '16px', background: '#ff1493', border: '2px solid white', borderRadius: '50%', left: '-8px', bottom: '-8px' },
+                  topRight: { width: '16px', height: '16px', background: '#ff1493', border: '2px solid white', borderRadius: '50%', right: '-8px', top: '-8px' },
+                  topLeft: { width: '16px', height: '16px', background: '#ff1493', border: '2px solid white', borderRadius: '50%', left: '-8px', top: '-8px' }
+                }}
               >
-                {sticker.content}
-              </motion.div>
+                <div style={{ width: '100%', height: '100%' }}>{sticker.content}</div>
+              </Rnd>
             ))}
           </div>
 

@@ -13,15 +13,15 @@ export default function PhotoboothApp() {
   const [currentState, setCurrentState] = useState<AppState>('HOME');
   const [mode, setMode] = useState<'SINGLE' | 'STRIP'>('SINGLE');
   const [capturedPhotos, setCapturedPhotos] = useState<string[]>([]);
-  const [finalImageId, setFinalImageId] = useState<string | null>(null);
+  const [finalImage, setFinalImage] = useState<string | null>(null);
 
   const handleCapture = (photos: string[]) => {
     setCapturedPhotos(photos);
     setCurrentState('EDITOR');
   };
 
-  const handleEditorComplete = (photoId: string) => {
-    setFinalImageId(photoId);
+  const handleEditorComplete = (dataUrl: string) => {
+    setFinalImage(dataUrl);
     setCurrentState('SHARE');
   };
 
@@ -71,7 +71,7 @@ export default function PhotoboothApp() {
       case 'EDITOR':
         return <PhotoEditor photos={capturedPhotos} mode={mode} onComplete={handleEditorComplete} onCancel={() => setCurrentState('CAMERA')} />;
       case 'SHARE':
-        return <ShareView photoId={finalImageId!} onHome={() => setCurrentState('HOME')} />;
+        return <ShareView image={finalImage!} onHome={() => setCurrentState('HOME')} />;
       case 'GALLERY':
         return <GalleryView onClose={() => setCurrentState('HOME')} />;
     }
