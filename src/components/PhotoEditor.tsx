@@ -72,14 +72,21 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
   const [editorTab, setEditorTab] = useState<EditorTab>('STICKERS');
   const [filter, setFilter] = useState<FilterType>('none');
   const [frame, setFrame] = useState<FrameType>('none');
-  const [activeStickers, setActiveStickers] = useState<{id: string, s: StickerDef, key: number}[]>([]);
+  const [activeStickers, setActiveStickers] = useState<{id: string, s: StickerDef, key: number, x: number, y: number}[]>([]);
   const [activeCategory, setActiveCategory] = useState<StickerCategory>('Party');
   const [isProcessing, setIsProcessing] = useState(false);
   const captureRef = useRef<HTMLDivElement>(null);
   const [stickerCounter, setStickerCounter] = useState(0);
 
   const addSticker = (sticker: StickerDef) => {
-    setActiveStickers([...activeStickers, { id: sticker.id, s: sticker, key: stickerCounter }]);
+    const scrollArea = document.getElementById('editor-scroll-area');
+    const scrollTop = scrollArea ? scrollArea.scrollTop : 0;
+    
+    // Spawn sticker slightly offset based on current view
+    const spawnX = mode === 'SINGLE' ? 100 + (stickerCounter % 5) * 20 : 50 + (stickerCounter % 3) * 20;
+    const spawnY = mode === 'SINGLE' ? 100 + (stickerCounter % 5) * 20 : Math.max(50, scrollTop + 150) + (stickerCounter % 5) * 20;
+
+    setActiveStickers([...activeStickers, { id: sticker.id, s: sticker, key: stickerCounter, x: spawnX, y: spawnY }]);
     setStickerCounter(stickerCounter + 1);
   };
 
@@ -215,45 +222,46 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-8 overflow-hidden relative">
-        <div 
-          ref={captureRef}
-          className={`relative bg-white shadow-2xl flex flex-col transition-all duration-300 ${
-            frame === 'polaroid' ? 'p-6 pb-28 border border-gray-100 rounded-sm' : 
-            frame === 'minimal-gold' ? 'p-3 border-[6px] border-[#d4af37] bg-white' : 
-            frame === 'soft-glow' ? 'p-4 bg-white rounded-3xl shadow-[0_0_40px_rgba(255,182,193,0.8)]' : 
-            frame === 'film' ? 'p-6 bg-black border-x-[24px] border-x-gray-900' : 
-            'p-0'
-          }`}
-          style={{ width: mode === 'SINGLE' ? '640px' : '400px' }}
-        >
-          {frame === 'film' && (
-            <div className="absolute inset-y-0 left-[-20px] w-4 flex flex-col justify-around py-4 opacity-50">
-              {[...Array(10)].map((_, i) => <div key={`l-${i}`} className="w-full h-6 bg-white rounded-sm"></div>)}
-            </div>
-          )}
-          {frame === 'film' && (
-            <div className="absolute inset-y-0 right-[-20px] w-4 flex flex-col justify-around py-4 opacity-50">
-              {[...Array(10)].map((_, i) => <div key={`r-${i}`} className="w-full h-6 bg-white rounded-sm"></div>)}
-            </div>
-          )}
+      <div id="editor-scroll-area" className="flex-1 overflow-y-auto overflow-x-hidden relative scroll-smooth">
+        <div className="min-h-full flex flex-col items-center justify-center py-12 px-4">
+          <div 
+            ref={captureRef}
+            className={`relative bg-white shadow-2xl flex flex-col transition-all duration-300 ${
+              frame === 'polaroid' ? 'p-6 pb-28 border border-gray-100 rounded-sm' : 
+              frame === 'minimal-gold' ? 'p-3 border-[6px] border-[#d4af37] bg-white' : 
+              frame === 'soft-glow' ? 'p-4 bg-white rounded-3xl shadow-[0_0_40px_rgba(255,182,193,0.8)]' : 
+              frame === 'film' ? 'p-6 bg-black border-x-[24px] border-x-gray-900' : 
+              'p-0'
+            }`}
+            style={{ width: mode === 'SINGLE' ? '640px' : '400px' }}
+          >
+            {frame === 'film' && (
+              <div className="absolute inset-y-0 left-[-20px] w-4 flex flex-col justify-around py-4 opacity-50">
+                {[...Array(10)].map((_, i) => <div key={`l-${i}`} className="w-full h-6 bg-white rounded-sm"></div>)}
+              </div>
+            )}
+            {frame === 'film' && (
+              <div className="absolute inset-y-0 right-[-20px] w-4 flex flex-col justify-around py-4 opacity-50">
+                {[...Array(10)].map((_, i) => <div key={`r-${i}`} className="w-full h-6 bg-white rounded-sm"></div>)}
+              </div>
+            )}
 
-          <div className={`w-full overflow-hidden flex flex-col relative pointer-events-none ${frame === 'soft-glow' ? 'rounded-2xl' : ''}`} style={{ filter: getFilterStyle(), gap: mode === 'STRIP' ? '12px' : '0' }}>
-            {photos.map((p, i) => (
-              <img key={i} src={p} className={`w-full object-cover ${mode === 'STRIP' ? 'aspect-[4/3] rounded-sm' : 'aspect-[4/3]'}`} alt={`Shot ${i}`} />
-            ))}
-          </div>
+            <div className={`w-full overflow-hidden flex flex-col relative pointer-events-none ${frame === 'soft-glow' ? 'rounded-2xl' : ''}`} style={{ filter: getFilterStyle(), gap: mode === 'STRIP' ? '12px' : '0' }}>
+              {photos.map((p, i) => (
+                <img key={i} src={p} className={`w-full object-cover ${mode === 'STRIP' ? 'aspect-[4/3] rounded-sm' : 'aspect-[4/3]'}`} alt={`Shot ${i}`} />
+              ))}
+            </div>
 
-          <div className="absolute inset-0 z-20 overflow-visible pointer-events-none">
-            {activeStickers.map(sticker => (
-              <Rnd
-                key={sticker.key}
-                default={{
-                  x: 100,
-                  y: 100,
-                  width: sticker.s.width,
-                  height: sticker.s.height
-                }}
+            <div className="absolute inset-0 z-20 overflow-visible pointer-events-none">
+              {activeStickers.map(sticker => (
+                <Rnd
+                  key={sticker.key}
+                  default={{
+                    x: sticker.x,
+                    y: sticker.y,
+                    width: sticker.s.width,
+                    height: sticker.s.height
+                  }}
                 bounds="parent"
                 className="pointer-events-auto group"
                 lockAspectRatio
