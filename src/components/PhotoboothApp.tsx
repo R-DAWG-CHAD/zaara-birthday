@@ -79,7 +79,7 @@ export default function PhotoboothApp() {
       case 'SHARE':
         return <ShareView image={finalImage!} onHome={() => setCurrentState('HOME')} />;
       case 'GALLERY':
-        return <GalleryView photos={gallery} onClose={() => setCurrentState('HOME')} />;
+        return <GalleryView onClose={() => setCurrentState('HOME')} />;
     }
   };
 

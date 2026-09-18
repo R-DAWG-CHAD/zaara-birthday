@@ -43,14 +43,20 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
     try {
       const canvas = await html2canvas(captureRef.current, {
         useCORS: true,
-        scale: 2, // higher resolution
+        scale: 2,
         backgroundColor: null,
       });
       const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-      onComplete(dataUrl);
+      
+      // Upload to Vercel Blob
+      const { uploadPhoto } = await import('../app/actions');
+      const blobUrl = await uploadPhoto(dataUrl);
+      
+      onComplete(blobUrl);
     } catch (err) {
       console.error(err);
       setIsProcessing(false);
+      alert("Failed to save photo. Please try again.");
     }
   };
 

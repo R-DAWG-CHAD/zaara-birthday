@@ -1,12 +1,22 @@
-import React from 'react';
-import { ArrowLeft } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import { getGalleryPhotos } from '../app/actions';
 
 interface GalleryViewProps {
-  photos: string[];
   onClose: () => void;
 }
 
-export default function GalleryView({ photos, onClose }: GalleryViewProps) {
+export default function GalleryView({ onClose }: GalleryViewProps) {
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getGalleryPhotos().then(urls => {
+      setPhotos(urls);
+      setLoading(false);
+    });
+  }, []);
+
   return (
     <div className="w-full h-full flex flex-col bg-[#fdf2f8] z-50 p-8 overflow-y-auto">
       <div className="flex items-center mb-8">
@@ -16,7 +26,12 @@ export default function GalleryView({ photos, onClose }: GalleryViewProps) {
         <h2 className="text-5xl font-serif text-[#d4af37]">Event Gallery</h2>
       </div>
 
-      {photos.length === 0 ? (
+      {loading ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-pink-400">
+          <Loader2 size={64} className="animate-spin mb-4 text-[#d4af37]" />
+          <p className="text-2xl font-light">Loading gallery...</p>
+        </div>
+      ) : photos.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-pink-400">
           <div className="text-8xl mb-4 opacity-50">📸</div>
           <p className="text-3xl font-light">No photos taken yet. Be the first!</p>
