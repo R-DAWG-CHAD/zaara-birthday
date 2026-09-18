@@ -17,7 +17,7 @@ type FilterType = 'none' | 'vintage' | 'bw' | 'vibrant';
 type FrameType = 'none' | 'polaroid' | 'minimal-gold' | 'soft-glow' | 'film';
 type StickerCategory = 'Glasses' | 'Decor' | 'Party';
 
-const STICKERS: Record<StickerCategory, { id: string, name: string, content: React.ReactNode, width: number, height: number }> = {
+const STICKERS: Record<StickerCategory, { id: string, name: string, content: React.ReactNode, width: number, height: number }[]> = {
   Glasses: [
     { id: 'heart-glasses', name: 'Heart Shades', width: 200, height: 90, content: (
       <svg viewBox="0 0 200 90" fill="none" xmlns="http://www.w3.org/2000/svg" style={{width: '100%', height: '100%'}}>
