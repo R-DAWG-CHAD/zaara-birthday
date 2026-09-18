@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react';
 import html2canvas from 'html2canvas';
 import { Rnd } from 'react-rnd';
-import { Type, Image as ImageIcon, Wand2, Crown, Flower2, Sparkles, Heart, Star, PartyPopper, Gift } from 'lucide-react';
+import { Type, Image as ImageIcon, Wand2, Star, Sparkles } from 'lucide-react';
 import { savePhotoLocally } from '../utils/db';
 
 interface PhotoEditorProps {
@@ -15,9 +15,14 @@ interface PhotoEditorProps {
 
 type FilterType = 'none' | 'vintage' | 'bw' | 'vibrant';
 type FrameType = 'none' | 'polaroid' | 'minimal-gold' | 'soft-glow' | 'film';
-type StickerCategory = 'Glasses' | 'Decor' | 'Party';
+type EditorTab = 'FILTERS' | 'FRAMES' | 'STICKERS';
+type StickerCategory = 'Glasses' | 'Party' | 'Nature' | 'Vibes';
 
-const STICKERS: Record<StickerCategory, { id: string, name: string, content: React.ReactNode, width: number, height: number }[]> = {
+const TWEMOJI_BASE = "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/";
+
+type StickerDef = { id: string, name: string, width: number, height: number, src?: string, content?: React.ReactNode };
+
+const STICKERS: Record<StickerCategory, StickerDef[]> = {
   Glasses: [
     { id: 'heart-glasses', name: 'Heart Shades', width: 200, height: 90, content: (
       <svg viewBox="0 0 200 90" fill="none" xmlns="http://www.w3.org/2000/svg" style={{width: '100%', height: '100%'}}>
@@ -34,48 +39,61 @@ const STICKERS: Record<StickerCategory, { id: string, name: string, content: Rea
         <path d="M 10,30 L 0,30 M 190,30 L 200,30" stroke="#ff69b4" strokeWidth="6" strokeLinecap="round"/>
       </svg>
     )},
-    { id: 'dark-shades', name: 'Dark Shades', width: 200, height: 70, content: (
-      <svg viewBox="0 0 200 70" fill="none" xmlns="http://www.w3.org/2000/svg" style={{width: '100%', height: '100%'}}>
-        <rect x="10" y="10" width="80" height="50" rx="10" fill="rgba(0,0,0,0.7)" stroke="#333" strokeWidth="6"/>
-        <rect x="110" y="10" width="80" height="50" rx="10" fill="rgba(0,0,0,0.7)" stroke="#333" strokeWidth="6"/>
-        <path d="M 90,30 Q 100,25 110,30" fill="none" stroke="#333" strokeWidth="6" strokeLinecap="round"/>
-      </svg>
-    )}
-  ],
-  Decor: [
-    { id: 'flower', name: 'Flower', width: 100, height: 100, content: <Flower2 className="w-full h-full" strokeWidth={1.5} color="#db2777" fill="#fbcfe8" /> },
-    { id: 'sparkles', name: 'Sparkles', width: 100, height: 100, content: <Sparkles className="w-full h-full" strokeWidth={1.5} color="#d4af37" fill="#fef08a" /> },
-    { id: 'heart', name: 'Heart', width: 100, height: 100, content: <Heart className="w-full h-full" strokeWidth={1.5} color="#e11d48" fill="#fda4af" /> },
-    { id: 'star', name: 'Star', width: 100, height: 100, content: <Star className="w-full h-full" strokeWidth={1.5} color="#d4af37" fill="#fde047" /> }
+    { id: 'dark-shades', name: 'Dark Shades', width: 200, height: 70, src: `${TWEMOJI_BASE}1f576.svg` }
   ],
   Party: [
-    { id: 'crown', name: 'Crown', width: 120, height: 120, content: <Crown className="w-full h-full" strokeWidth={1.5} color="#b8860b" fill="#ffd700" /> },
-    { id: 'popper', name: 'Popper', width: 100, height: 100, content: <PartyPopper className="w-full h-full" strokeWidth={1.5} color="#ea580c" fill="#fdba74" /> },
-    { id: 'gift', name: 'Gift', width: 100, height: 100, content: <Gift className="w-full h-full" strokeWidth={1.5} color="#4f46e5" fill="#a5b4fc" /> }
+    { id: 'crown', name: 'Crown', width: 120, height: 120, src: `${TWEMOJI_BASE}1f451.svg` },
+    { id: 'popper', name: 'Popper', width: 120, height: 120, src: `${TWEMOJI_BASE}1f389.svg` },
+    { id: 'cake', name: 'Cake', width: 120, height: 120, src: `${TWEMOJI_BASE}1f382.svg` },
+    { id: 'balloon', name: 'Balloon', width: 100, height: 120, src: `${TWEMOJI_BASE}1f388.svg` },
+    { id: 'confetti', name: 'Confetti', width: 120, height: 120, src: `${TWEMOJI_BASE}1f38a.svg` },
+    { id: 'gift', name: 'Gift', width: 100, height: 100, src: `${TWEMOJI_BASE}1f381.svg` },
+    { id: 'disco', name: 'Disco Ball', width: 120, height: 120, src: `${TWEMOJI_BASE}1faa9.svg` }
+  ],
+  Nature: [
+    { id: 'rose', name: 'Rose', width: 100, height: 100, src: `${TWEMOJI_BASE}1f339.svg` },
+    { id: 'hibiscus', name: 'Hibiscus', width: 100, height: 100, src: `${TWEMOJI_BASE}1f33a.svg` },
+    { id: 'blossom', name: 'Blossom', width: 100, height: 100, src: `${TWEMOJI_BASE}1f338.svg` },
+    { id: 'sunflower', name: 'Sunflower', width: 100, height: 100, src: `${TWEMOJI_BASE}1f33b.svg` },
+    { id: 'butterfly', name: 'Butterfly', width: 100, height: 100, src: `${TWEMOJI_BASE}1f98b.svg` }
+  ],
+  Vibes: [
+    { id: 'sparkles', name: 'Sparkles', width: 100, height: 100, src: `${TWEMOJI_BASE}2728.svg` },
+    { id: 'sparkling-heart', name: 'Pink Heart', width: 100, height: 100, src: `${TWEMOJI_BASE}1f496.svg` },
+    { id: 'red-heart', name: 'Red Heart', width: 100, height: 100, src: `${TWEMOJI_BASE}2764.svg` },
+    { id: 'star', name: 'Star', width: 100, height: 100, src: `${TWEMOJI_BASE}1f31f.svg` },
+    { id: 'magic-wand', name: 'Magic Wand', width: 120, height: 120, src: `${TWEMOJI_BASE}1fa84.svg` },
+    { id: 'kiss', name: 'Kiss', width: 100, height: 80, src: `${TWEMOJI_BASE}1f48b.svg` },
+    { id: 'diamond', name: 'Diamond', width: 100, height: 100, src: `${TWEMOJI_BASE}1f48e.svg` }
   ]
 };
 
 export default function PhotoEditor({ photos, mode, onComplete, onCancel }: PhotoEditorProps) {
+  const [editorTab, setEditorTab] = useState<EditorTab>('STICKERS');
   const [filter, setFilter] = useState<FilterType>('none');
   const [frame, setFrame] = useState<FrameType>('none');
-  const [activeStickers, setActiveStickers] = useState<{id: string, content: React.ReactNode, key: number, w: number, h: number}[]>([]);
-  const [activeCategory, setActiveCategory] = useState<StickerCategory>('Glasses');
+  const [activeStickers, setActiveStickers] = useState<{id: string, s: StickerDef, key: number}[]>([]);
+  const [activeCategory, setActiveCategory] = useState<StickerCategory>('Party');
   const [isProcessing, setIsProcessing] = useState(false);
   const captureRef = useRef<HTMLDivElement>(null);
   const [stickerCounter, setStickerCounter] = useState(0);
 
-  const addSticker = (sticker: typeof STICKERS[StickerCategory][0]) => {
-    setActiveStickers([...activeStickers, { id: sticker.id, content: sticker.content, key: stickerCounter, w: sticker.width, h: sticker.height }]);
+  const addSticker = (sticker: StickerDef) => {
+    setActiveStickers([...activeStickers, { id: sticker.id, s: sticker, key: stickerCounter }]);
     setStickerCounter(stickerCounter + 1);
+  };
+
+  const removeSticker = (key: number) => {
+    setActiveStickers(activeStickers.filter(s => s.key !== key));
   };
 
   const handleComplete = async () => {
     if (!captureRef.current) return;
     setIsProcessing(true);
     
-    // Briefly hide resize handles for the screenshot
-    const handles = document.querySelectorAll('.react-resizable-handle');
-    handles.forEach(h => (h as HTMLElement).style.display = 'none');
+    // Hide resize handles and remove buttons for screenshot
+    const elementsToHide = document.querySelectorAll('.react-resizable-handle, .sticker-remove-btn');
+    elementsToHide.forEach(h => (h as HTMLElement).style.display = 'none');
     
     try {
       const canvas = await html2canvas(captureRef.current, {
@@ -84,15 +102,13 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
       });
       const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
       
-      // Save locally but DO NOT BLOCK on it
       savePhotoLocally(dataUrl).catch(e => console.warn("Failed to save to local DB:", e));
-      
       onComplete(dataUrl);
     } catch (err) {
       console.error("Save Error:", err);
       setIsProcessing(false);
       alert("Failed to render photo.");
-      handles.forEach(h => (h as HTMLElement).style.display = 'block');
+      elementsToHide.forEach(h => (h as HTMLElement).style.display = 'block');
     }
   };
 
@@ -107,70 +123,95 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
 
   return (
     <div className="w-full h-full flex flex-row bg-[#fdf2f8] z-50 relative">
-      <div className="w-96 bg-white/90 backdrop-blur-md shadow-2xl p-6 overflow-y-auto border-r border-pink-100 relative z-50 flex flex-col">
-        <h2 className="text-4xl font-cursive text-pink-800 mb-6 border-b border-pink-100 pb-4">Customize</h2>
+      <div className="w-96 bg-white/95 backdrop-blur-md shadow-[20px_0_40px_-15px_rgba(255,182,193,0.3)] border-r border-pink-100 flex flex-col z-50 overflow-hidden">
         
-        <div className="mb-6">
-          <h3 className="flex items-center text-lg font-medium text-gray-700 mb-3"><Wand2 size={18} className="mr-2 text-pink-500" /> Filters</h3>
-          <div className="flex flex-wrap gap-2">
-            {(['none', 'vintage', 'bw', 'vibrant'] as FilterType[]).map(f => (
-              <button key={f} onClick={() => setFilter(f)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${filter === f ? 'bg-pink-500 text-white shadow-md' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'}`}
-              >
-                {f === 'bw' ? 'B&W' : f}
-              </button>
-            ))}
-          </div>
+        {/* Editor Tab Navigation */}
+        <div className="flex border-b border-pink-100 bg-pink-50/50 p-2 gap-2">
+          <button onClick={() => setEditorTab('STICKERS')} className={`flex-1 py-3 px-2 rounded-xl text-sm font-bold transition-all flex flex-col items-center gap-1 ${editorTab === 'STICKERS' ? 'bg-white text-pink-600 shadow-sm' : 'text-gray-500 hover:bg-white/50'}`}>
+            <Star size={18} /> Stickers
+          </button>
+          <button onClick={() => setEditorTab('FILTERS')} className={`flex-1 py-3 px-2 rounded-xl text-sm font-bold transition-all flex flex-col items-center gap-1 ${editorTab === 'FILTERS' ? 'bg-white text-pink-600 shadow-sm' : 'text-gray-500 hover:bg-white/50'}`}>
+            <Wand2 size={18} /> Filters
+          </button>
+          <button onClick={() => setEditorTab('FRAMES')} className={`flex-1 py-3 px-2 rounded-xl text-sm font-bold transition-all flex flex-col items-center gap-1 ${editorTab === 'FRAMES' ? 'bg-white text-pink-600 shadow-sm' : 'text-gray-500 hover:bg-white/50'}`}>
+            <ImageIcon size={18} /> Frames
+          </button>
         </div>
 
-        <div className="mb-6">
-          <h3 className="flex items-center text-lg font-medium text-gray-700 mb-3"><ImageIcon size={18} className="mr-2 text-pink-500" /> Frames</h3>
-          <div className="flex flex-wrap gap-2">
-            {(['none', 'polaroid', 'minimal-gold', 'soft-glow', 'film'] as FrameType[]).map(f => (
-              <button key={f} onClick={() => setFrame(f)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${frame === f ? 'bg-pink-500 text-white shadow-md' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'}`}
-              >
-                {f.replace('-', ' ')}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex-1 min-h-0 flex flex-col">
-          <h3 className="flex items-center text-lg font-medium text-gray-700 mb-3"><Type size={18} className="mr-2 text-pink-500" /> Stickers</h3>
+        {/* Dynamic Content Area (Scrollable) */}
+        <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
           
-          <div className="flex space-x-2 mb-4 overflow-x-auto pb-2">
-            {(Object.keys(STICKERS) as StickerCategory[]).map(cat => (
-              <button key={cat} onClick={() => setActiveCategory(cat)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${activeCategory === cat ? 'bg-pink-100 text-pink-800 ring-2 ring-pink-400' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
+          {editorTab === 'FILTERS' && (
+            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+              <h3 className="text-xl font-cursive text-pink-800 mb-4">Choose a Filter</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {(['none', 'vintage', 'bw', 'vibrant'] as FilterType[]).map(f => (
+                  <button key={f} onClick={() => setFilter(f)}
+                    className={`p-4 rounded-2xl capitalize font-medium transition-all ${filter === f ? 'bg-pink-500 text-white shadow-md scale-105' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'}`}
+                  >
+                    {f === 'bw' ? 'B&W' : f}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
-          <div className="grid grid-cols-2 gap-3 overflow-y-auto pr-2 pb-4 flex-1">
-            {STICKERS[activeCategory].map(s => (
-              <button key={s.id} onClick={() => addSticker(s)}
-                className="p-3 bg-white border border-pink-100 rounded-xl hover:border-pink-300 hover:shadow-md flex flex-col items-center justify-center transition-all"
-              >
-                <div className="h-16 w-full flex items-center justify-center pointer-events-none">
-                  <div style={{ width: s.width * 0.4, height: s.height * 0.4 }}>{s.content}</div>
-                </div>
-                <span className="text-xs text-gray-600 font-medium mt-1">{s.name}</span>
-              </button>
-            ))}
-          </div>
+          {editorTab === 'FRAMES' && (
+            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+              <h3 className="text-xl font-cursive text-pink-800 mb-4">Choose a Frame</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {(['none', 'polaroid', 'minimal-gold', 'soft-glow', 'film'] as FrameType[]).map(f => (
+                  <button key={f} onClick={() => setFrame(f)}
+                    className={`p-4 rounded-2xl capitalize font-medium transition-all ${frame === f ? 'bg-pink-500 text-white shadow-md scale-105' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'}`}
+                  >
+                    {f.replace('-', ' ')}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {editorTab === 'STICKERS' && (
+            <div className="animate-in fade-in slide-in-from-left-4 duration-300 flex flex-col h-full">
+              <div className="flex space-x-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
+                {(Object.keys(STICKERS) as StickerCategory[]).map(cat => (
+                  <button key={cat} onClick={() => setActiveCategory(cat)}
+                    className={`px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${activeCategory === cat ? 'bg-pink-500 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                {STICKERS[activeCategory].map(s => (
+                  <button key={s.id} onClick={() => addSticker(s)}
+                    className="aspect-square bg-gray-50 border border-gray-100 rounded-2xl hover:border-pink-300 hover:shadow-md hover:bg-white flex flex-col items-center justify-center transition-all p-2 group"
+                  >
+                    <div className="flex-1 w-full flex items-center justify-center pointer-events-none transform group-hover:scale-110 transition-transform">
+                      {s.src ? <img src={s.src} className="w-12 h-12 object-contain" alt={s.name} /> : <div style={{ transform: 'scale(0.4)' }}>{s.content}</div>}
+                    </div>
+                    <span className="text-[10px] text-gray-500 font-medium mt-1 uppercase tracking-wider">{s.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="pt-4 mt-auto border-t border-pink-100 flex flex-col gap-3">
-          <p className="text-xs text-center text-gray-400">Drag corners to resize stickers on the photo!</p>
-          <button onClick={onCancel} className="w-full py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200">
-            Retake Photo
-          </button>
-          <button onClick={handleComplete} disabled={isProcessing} className="w-full py-4 bg-gradient-to-r from-pink-500 to-[#d4af37] text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all text-lg">
-            {isProcessing ? 'Saving...' : 'Finish!'}
-          </button>
+        {/* Footer Actions */}
+        <div className="p-6 bg-white border-t border-pink-100 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)]">
+          {editorTab === 'STICKERS' && (
+             <p className="text-xs text-center text-pink-400 mb-3 font-medium flex items-center justify-center"><Sparkles size={12} className="mr-1"/> Drag corners to resize!</p>
+          )}
+          <div className="flex gap-3">
+            <button onClick={onCancel} className="flex-1 py-4 bg-gray-100 text-gray-600 rounded-2xl font-bold hover:bg-gray-200 transition-colors">
+              Retake
+            </button>
+            <button onClick={handleComplete} disabled={isProcessing} className="flex-[2] py-4 bg-gradient-to-r from-pink-500 to-[#d4af37] text-white rounded-2xl font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all text-lg">
+              {isProcessing ? 'Saving...' : 'Finish!'}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -210,20 +251,33 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
                 default={{
                   x: 100,
                   y: 100,
-                  width: sticker.w,
-                  height: sticker.h
+                  width: sticker.s.width,
+                  height: sticker.s.height
                 }}
                 bounds="parent"
-                className="pointer-events-auto filter drop-shadow-lg"
+                className="pointer-events-auto group"
                 lockAspectRatio
                 resizeHandleStyles={{
-                  bottomRight: { width: '16px', height: '16px', background: '#ff1493', border: '2px solid white', borderRadius: '50%', right: '-8px', bottom: '-8px' },
-                  bottomLeft: { width: '16px', height: '16px', background: '#ff1493', border: '2px solid white', borderRadius: '50%', left: '-8px', bottom: '-8px' },
-                  topRight: { width: '16px', height: '16px', background: '#ff1493', border: '2px solid white', borderRadius: '50%', right: '-8px', top: '-8px' },
-                  topLeft: { width: '16px', height: '16px', background: '#ff1493', border: '2px solid white', borderRadius: '50%', left: '-8px', top: '-8px' }
+                  bottomRight: { width: '20px', height: '20px', background: '#ff1493', border: '3px solid white', borderRadius: '50%', right: '-10px', bottom: '-10px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' },
+                  bottomLeft: { width: '20px', height: '20px', background: '#ff1493', border: '3px solid white', borderRadius: '50%', left: '-10px', bottom: '-10px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' },
+                  topRight: { width: '20px', height: '20px', background: '#ff1493', border: '3px solid white', borderRadius: '50%', right: '-10px', top: '-10px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' },
+                  topLeft: { width: '20px', height: '20px', background: '#ff1493', border: '3px solid white', borderRadius: '50%', left: '-10px', top: '-10px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }
                 }}
               >
-                <div style={{ width: '100%', height: '100%' }}>{sticker.content}</div>
+                <div className="w-full h-full relative">
+                  {/* Delete Button (appears on hover/active) */}
+                  <button 
+                    onClick={() => removeSticker(sticker.key)}
+                    className="sticker-remove-btn absolute -top-4 -right-4 w-8 h-8 bg-white text-red-500 rounded-full shadow-md border border-gray-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-50 font-bold"
+                  >
+                    ×
+                  </button>
+                  {sticker.s.src ? 
+                    <img src={sticker.s.src} className="w-full h-full object-contain filter drop-shadow-md" alt={sticker.s.name} /> 
+                    : 
+                    <div className="w-full h-full filter drop-shadow-md">{sticker.s.content}</div>
+                  }
+                </div>
               </Rnd>
             ))}
           </div>
