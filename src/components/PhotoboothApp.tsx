@@ -11,19 +11,17 @@ type AppState = 'HOME' | 'CAMERA' | 'EDITOR' | 'SHARE' | 'GALLERY';
 
 export default function PhotoboothApp() {
   const [currentState, setCurrentState] = useState<AppState>('HOME');
-  const [photos, setPhotos] = useState<string[]>([]);
   const [mode, setMode] = useState<'SINGLE' | 'STRIP'>('SINGLE');
-  const [finalImage, setFinalImage] = useState<string | null>(null);
-  const [gallery, setGallery] = useState<string[]>([]);
+  const [capturedPhotos, setCapturedPhotos] = useState<string[]>([]);
+  const [finalImageId, setFinalImageId] = useState<string | null>(null);
 
-  const handleCapture = (capturedPhotos: string[]) => {
-    setPhotos(capturedPhotos);
+  const handleCapture = (photos: string[]) => {
+    setCapturedPhotos(photos);
     setCurrentState('EDITOR');
   };
 
-  const handleEditComplete = (image: string) => {
-    setFinalImage(image);
-    setGallery(prev => [image, ...prev]);
+  const handleEditorComplete = (photoId: string) => {
+    setFinalImageId(photoId);
     setCurrentState('SHARE');
   };
 
@@ -71,9 +69,9 @@ export default function PhotoboothApp() {
       case 'CAMERA':
         return <CameraView mode={mode} onCapture={handleCapture} onCancel={() => setCurrentState('HOME')} />;
       case 'EDITOR':
-        return <PhotoEditor photos={photos} mode={mode} onComplete={handleEditComplete} onCancel={() => setCurrentState('CAMERA')} />;
+        return <PhotoEditor photos={capturedPhotos} mode={mode} onComplete={handleEditorComplete} onCancel={() => setCurrentState('CAMERA')} />;
       case 'SHARE':
-        return <ShareView image={finalImage!} onHome={() => setCurrentState('HOME')} />;
+        return <ShareView photoId={finalImageId!} onHome={() => setCurrentState('HOME')} />;
       case 'GALLERY':
         return <GalleryView onClose={() => setCurrentState('HOME')} />;
     }

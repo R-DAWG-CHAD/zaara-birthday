@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Loader2 } from 'lucide-react';
-import { getGalleryPhotos } from '../app/actions';
+import { ArrowLeft, Trash2 } from 'lucide-react';
+import { getAllPhotosLocally } from '../utils/db';
 
 interface GalleryViewProps {
   onClose: () => void;
@@ -11,8 +11,8 @@ export default function GalleryView({ onClose }: GalleryViewProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getGalleryPhotos().then(urls => {
-      setPhotos(urls);
+    getAllPhotosLocally().then(data => {
+      setPhotos(data);
       setLoading(false);
     });
   }, []);
@@ -27,20 +27,18 @@ export default function GalleryView({ onClose }: GalleryViewProps) {
       </div>
 
       {loading ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-pink-400">
-          <Loader2 size={64} className="animate-spin mb-4 text-[#d4af37]" />
-          <p className="text-2xl font-light">Loading gallery...</p>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-pink-500"></div>
         </div>
       ) : photos.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-pink-400">
-          <div className="text-8xl mb-4 opacity-50">📸</div>
-          <p className="text-3xl font-light">No photos taken yet. Be the first!</p>
+        <div className="flex-1 flex items-center justify-center text-2xl text-pink-400 font-medium">
+          No photos taken yet! Be the first!
         </div>
       ) : (
-        <div className="grid grid-cols-4 gap-8 max-w-7xl mx-auto w-full">
-          {photos.map((p, i) => (
-            <div key={i} className="aspect-auto bg-white rounded-xl shadow-lg border-[12px] border-white overflow-hidden transform hover:scale-105 transition-transform hover:-rotate-1">
-              <img src={p} alt={`Gallery ${i}`} className="w-full h-auto object-cover" />
+        <div className="columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6 pb-20">
+          {photos.map((url, i) => (
+            <div key={i} className="break-inside-avoid bg-white p-3 rounded-2xl shadow-lg border border-pink-100 hover:shadow-xl transition-shadow transform hover:-translate-y-1">
+              <img src={url} alt={`Gallery ${i}`} className="w-full h-auto rounded-lg" />
             </div>
           ))}
         </div>

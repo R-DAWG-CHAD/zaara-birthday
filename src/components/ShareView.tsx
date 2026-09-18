@@ -1,33 +1,63 @@
-import React from 'react';
-import { QRCodeSVG } from 'qrcode.react';
-import { Home } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Share, Home } from 'lucide-react';
+import { getPhotoLocally } from '../utils/db';
 
 interface ShareViewProps {
-  image: string;
+  photoId: string;
   onHome: () => void;
 }
 
-export default function ShareView({ image, onHome }: ShareViewProps) {
+export default function ShareView({ photoId, onHome }: ShareViewProps) {
+  const [image, setImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    getPhotoLocally(photoId).then(dataUrl => {
+      if (dataUrl) setImage(dataUrl);
+    });
+  }, [photoId]);
+
+  const handleShare = async () => {
+    if (!image) return;
+    try {
+      const res = await fetch(image);
+      const blob = await res.blob();
+      const file = new File([blob], 'zaara-birthday.jpg', { type: 'image/jpeg' });
+      
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Zaara\'s 17th Birthday',
+          files: [file]
+        });
+      } else {
+        alert("Sharing not supported on this browser.");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <div className="w-full h-full flex flex-col items-center justify-center bg-[#fdf2f8] z-50">
       <div className="bg-white/70 backdrop-blur-md p-16 shadow-[0_20px_60px_-15px_rgba(212,175,55,0.2)] max-w-5xl w-full flex flex-row items-center space-x-16 border border-white/50 organic-shape-2 relative">
-        <div className="absolute -top-6 -left-6 text-[#8fbc8f] opacity-50 text-6xl">✿</div>
-        
         <div className="flex-1">
           <div className="bg-white p-4 rounded-xl shadow-lg border border-gray-100 transform -rotate-2">
-            <img src={image} alt="Final" className="w-full h-auto rounded-sm" />
+            {image ? <img src={image} alt="Final" className="w-full h-auto rounded-sm" /> : <div className="w-full h-96 bg-gray-100 animate-pulse"></div>}
           </div>
         </div>
         
         <div className="flex-1 flex flex-col items-center">
-          <h2 className="text-7xl font-cursive text-[#d4af37] mb-8 text-center drop-shadow-md tracking-wide">Scan to Save!</h2>
+          <h2 className="text-7xl font-cursive text-[#d4af37] mb-8 text-center drop-shadow-md tracking-wide">Share it!</h2>
           
-          <div className="bg-white p-6 rounded-2xl shadow-md border-2 border-pink-100">
-            <QRCodeSVG value={image} size={280} fgColor="#4a154b" />
-          </div>
+          <button 
+            onClick={handleShare}
+            className="w-full py-8 bg-pink-500 text-white rounded-3xl font-bold shadow-xl hover:bg-pink-600 text-3xl flex items-center justify-center transition-transform active:scale-95"
+          >
+            <Share size={36} className="mr-4" />
+            AirDrop / Share
+          </button>
           
           <p className="mt-8 text-[#4a154b] text-center text-xl font-light">
-            Point your phone's camera at the code to download your photo.
+            Tap the button above to instantly AirDrop or Message this photo to your phone!
           </p>
           
           <button 
