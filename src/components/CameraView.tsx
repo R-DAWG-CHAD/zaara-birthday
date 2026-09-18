@@ -1,6 +1,5 @@
-import React, { useRef, useState, useEffect } from 'react';
-import Webcam from 'react-webcam';
-import { Camera, X } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { Camera, X, Check } from 'lucide-react';
 
 interface CameraViewProps {
   mode: 'SINGLE' | 'STRIP';
@@ -9,81 +8,74 @@ interface CameraViewProps {
 }
 
 export default function CameraView({ mode, onCapture, onCancel }: CameraViewProps) {
-  const webcamRef = useRef<Webcam>(null);
-  const [countdown, setCountdown] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [captured, setCaptured] = useState<string[]>([]);
   const shotsNeeded = mode === 'STRIP' ? 4 : 1;
 
-  const startCapture = () => {
-    setCountdown(3);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          const newCaptured = [...captured, event.target.result as string];
+          setCaptured(newCaptured);
+          
+          if (newCaptured.length >= shotsNeeded) {
+            onCapture(newCaptured);
+          }
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
-  useEffect(() => {
-    if (countdown === null) return;
-    
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (countdown === 0) {
-      const imageSrc = webcamRef.current?.getScreenshot();
-      if (imageSrc) {
-        const newCaptured = [...captured, imageSrc];
-        setCaptured(newCaptured);
-        if (newCaptured.length < shotsNeeded) {
-          setCountdown(3);
-        } else {
-          setCountdown(null);
-          // Add a small delay before navigating to editor so user sees the last flash
-          setTimeout(() => onCapture(newCaptured), 500);
-        }
-      }
-    }
-  }, [countdown, captured, shotsNeeded, onCapture]);
+  const openCamera = () => {
+    fileInputRef.current?.click();
+  };
 
   return (
-    <div className="relative w-full h-full flex flex-col items-center justify-center bg-black z-50">
+    <div className="relative w-full h-full flex flex-col items-center justify-center bg-[#fdf2f8] z-50">
       <button 
         onClick={onCancel}
-        className="absolute top-8 left-8 text-white z-50 p-4 bg-white/20 rounded-full hover:bg-white/40 backdrop-blur-md"
+        className="absolute top-8 left-8 text-pink-800 z-50 p-4 bg-white rounded-full shadow-md hover:bg-pink-50"
       >
         <X size={32} />
       </button>
 
-      <div className="relative w-full max-w-5xl rounded-3xl overflow-hidden shadow-2xl bg-gray-900 border-8 border-pink-400">
-        <Webcam
-          audio={false}
-          ref={webcamRef}
-          screenshotFormat="image/jpeg"
-          videoConstraints={{
-            facingMode: "user",
-            aspectRatio: 4/3
-          }}
-          className="w-full h-auto transform scale-x-[-1]" /* Mirror the webcam */
-        />
+      <div className="flex flex-col items-center justify-center space-y-12 bg-white/80 p-16 rounded-[3rem] shadow-xl backdrop-blur-md border border-white/50 text-center max-w-2xl">
+        <h2 className="text-5xl font-cursive text-pink-800 drop-shadow-sm">
+          {mode === 'STRIP' ? `Photo ${captured.length + 1} of 4` : 'Ready for your close-up?'}
+        </h2>
         
-        {countdown !== null && countdown > 0 && (
-          <div className="absolute inset-0 flex items-center justify-center z-20">
-            <span className="text-[15rem] font-bold text-white drop-shadow-2xl">
-              {countdown}
-            </span>
+        <p className="text-xl font-medium text-pink-600">
+          Tap the camera below to open your iPad's built-in camera.
+        </p>
+
+        {mode === 'STRIP' && captured.length > 0 && (
+          <div className="flex space-x-4">
+            {captured.map((_, i) => (
+              <div key={i} className="w-16 h-16 bg-pink-500 rounded-full flex items-center justify-center text-white shadow-md">
+                <Check size={32} />
+              </div>
+            ))}
           </div>
         )}
 
-        {countdown === 0 && (
-          <div className="absolute inset-0 bg-white z-20 opacity-80 duration-100"></div>
-        )}
-      </div>
+        <input 
+          type="file" 
+          accept="image/*" 
+          capture="user" 
+          ref={fileInputRef} 
+          className="hidden" 
+          onChange={handleFileChange}
+        />
 
-      <div className="mt-8 flex flex-col items-center">
-        <div className="text-white mb-6 text-center text-2xl font-medium tracking-wide">
-          {mode === 'STRIP' ? `Shot ${captured.length + 1} of 4` : 'Ready to capture!'}
-        </div>
         <button 
-          onClick={startCapture}
-          disabled={countdown !== null}
-          className="w-24 h-24 bg-pink-500 rounded-full border-4 border-white flex items-center justify-center hover:bg-pink-400 disabled:opacity-50 transition-transform active:scale-95 shadow-[0_0_20px_rgba(236,72,153,0.5)]"
+          onClick={openCamera}
+          className="w-40 h-40 bg-gradient-to-br from-[#d4af37] to-yellow-500 rounded-full border-8 border-white flex items-center justify-center hover:scale-105 transition-transform shadow-[0_10px_30px_rgba(212,175,55,0.4)]"
         >
-          <Camera size={40} className="text-white" />
+          <Camera size={64} className="text-white" />
         </button>
       </div>
     </div>
