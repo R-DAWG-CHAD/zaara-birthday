@@ -106,6 +106,7 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
       const canvas = await html2canvas(captureRef.current, {
         scale: 1.5,
         backgroundColor: '#ffffff',
+        useCORS: true,
       });
       const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
       
