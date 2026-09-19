@@ -270,7 +270,8 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
                   height: sticker.s.height
                 }}
                 bounds="parent"
-                className="pointer-events-auto group"
+                className={`pointer-events-auto group rnd-${sticker.key}`}
+                cancel=".sticker-controls"
                 lockAspectRatio
                 resizeHandleStyles={{
                   bottomRight: { width: '20px', height: '20px', background: '#ff1493', border: '3px solid white', borderRadius: '50%', right: '-10px', bottom: '-10px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' },
@@ -279,21 +280,22 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
                   topLeft: { width: '20px', height: '20px', background: '#ff1493', border: '3px solid white', borderRadius: '50%', left: '-10px', top: '-10px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }
                 }}
               >
-                <div className="w-full h-full relative">
-                  {/* Rotation handle (at the top center) */}
+                <div className="w-full h-full relative" style={{ transform: `rotate(${sticker.r || 0}deg)` }}>
+                  
+                  {/* Rotation handle */}
                   <div 
                     className="sticker-controls absolute -top-10 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-white rounded-full shadow-md border-2 border-pink-300 z-50 flex items-center justify-center cursor-grab pointer-events-auto hover:bg-pink-50"
                     onPointerDown={(e) => {
                       e.stopPropagation();
-                      const stickerEl = e.currentTarget.parentElement;
-                      if (!stickerEl) return;
-                      const rect = stickerEl.getBoundingClientRect();
+                      const rndEl = document.querySelector(`.rnd-${sticker.key}`);
+                      if (!rndEl) return;
+                      const rect = rndEl.getBoundingClientRect();
                       const centerX = rect.left + rect.width / 2;
                       const centerY = rect.top + rect.height / 2;
 
                       const onMove = (moveEv: PointerEvent) => {
                         const angle = Math.atan2(moveEv.clientY - centerY, moveEv.clientX - centerX);
-                        const degrees = (angle * 180) / Math.PI + 90; // +90 because handle is at top
+                        const degrees = (angle * 180) / Math.PI + 90; 
                         setStickerRotation(sticker.key, degrees);
                       };
 
@@ -306,10 +308,10 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
                       window.addEventListener('pointerup', onUp);
                     }}
                   >
-                    <span className="text-pink-500 font-bold mb-1">↻</span>
+                    <span className="text-pink-500 font-bold mb-1 pointer-events-none">↻</span>
                   </div>
 
-                  {/* Delete Button (top right) */}
+                  {/* Delete Button */}
                   <button 
                     onPointerDown={(e) => { e.stopPropagation(); removeSticker(sticker.key); }}
                     className="sticker-controls absolute -top-4 -right-4 w-8 h-8 bg-white text-red-500 rounded-full shadow-md border border-red-100 flex items-center justify-center z-50 font-bold text-xl leading-none pointer-events-auto hover:bg-red-50"
@@ -317,14 +319,12 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
                     ×
                   </button>
                   
-                  {/* The rotated content */}
-                  <div className="w-full h-full" style={{ transform: `rotate(${sticker.r || 0}deg)` }}>
-                    {sticker.s.src ? 
-                      <img src={sticker.s.src} crossOrigin="anonymous" className="w-full h-full object-contain" alt={sticker.s.name} /> 
-                      : 
-                      <div className="w-full h-full">{sticker.s.content}</div>
-                    }
-                  </div>
+                  {/* Content */}
+                  {sticker.s.src ? 
+                    <img src={sticker.s.src + "?v=pb1"} crossOrigin="anonymous" className="w-full h-full object-contain pointer-events-none" alt={sticker.s.name} /> 
+                    : 
+                    <div className="w-full h-full pointer-events-none">{sticker.s.content}</div>
+                  }
                 </div>
               </Rnd>
             ))}
@@ -332,7 +332,7 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
 
           {(frame === 'polaroid' || frame === 'minimal-gold' || frame === 'soft-glow') && (
             <div className={`absolute w-full text-center z-10 pointer-events-none left-0 ${frame === 'polaroid' ? 'bottom-8' : 'bottom-6'}`}>
-              <h1 className="text-4xl font-cursive text-[#d4af37] font-bold bg-white/90 inline-block px-6 py-2 rounded-full shadow-sm">Zaara's 17th Birthday</h1>
+              <h1 className="text-4xl font-cursive text-[#d4af37] font-bold bg-white/90 inline-block px-6 py-2 rounded-full">Zaara's 17th Birthday</h1>
             </div>
           )}
         </div>
