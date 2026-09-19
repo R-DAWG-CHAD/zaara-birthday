@@ -18,12 +18,29 @@ export default function CameraView({ mode, onCapture, onCancel }: CameraViewProp
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
-          const newCaptured = [...captured, event.target.result as string];
-          setCaptured(newCaptured);
-          
-          if (newCaptured.length >= shotsNeeded) {
-            onCapture(newCaptured);
-          }
+          // Compress the massive iPad camera image
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 1200;
+            const scale = Math.min(MAX_WIDTH / img.width, 1);
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+              const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+              
+              const newCaptured = [...captured, compressedDataUrl];
+              setCaptured(newCaptured);
+              
+              if (newCaptured.length >= shotsNeeded) {
+                onCapture(newCaptured);
+              }
+            }
+          };
+          img.src = event.target.result as string;
         }
       };
       reader.readAsDataURL(file);
