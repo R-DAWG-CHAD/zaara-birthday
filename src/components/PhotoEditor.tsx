@@ -13,7 +13,7 @@ interface PhotoEditorProps {
 }
 
 type FilterType = 'none' | 'vintage' | 'bw' | 'vibrant';
-type FrameType = 'none' | 'polaroid' | 'minimal-gold' | 'soft-glow' | 'film' | 'cherry-blossom' | 'neon-cyber' | 'pastel-dream';
+type FrameType = 'none' | 'polaroid' | 'minimal-gold' | 'soft-glow' | 'film' | 'cherry-blossom' | 'neon-cyber' | 'pastel-dream' | 'sweet-cherries';
 type EditorTab = 'FILTERS' | 'FRAMES' | 'STICKERS';
 type StickerCategory = 'Glasses' | 'Party' | 'Nature' | 'Vibes';
 
@@ -106,6 +106,7 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
       else if (frame === 'cherry-blossom') { pTop = 20; pRight = 20; pLeft = 20; pBottom = 20; }
       else if (frame === 'neon-cyber') { pTop = 16; pRight = 16; pLeft = 16; pBottom = 16; }
       else if (frame === 'pastel-dream') { pTop = 24; pRight = 24; pLeft = 24; pBottom = 24; }
+      else if (frame === 'sweet-cherries') { pTop = 28; pRight = 28; pLeft = 28; pBottom = 28; }
 
       const photoWidth = width - pLeft - pRight;
       const photoHeight = photoWidth * 0.75; // 4/3
@@ -159,6 +160,20 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
         grad.addColorStop(1, '#fef08a'); // yellow-200
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, width, height);
+      } else if (frame === 'sweet-cherries') {
+        ctx.fillStyle = '#ffe4e1'; // misty rose background
+        ctx.fillRect(0, 0, width, height);
+        ctx.strokeStyle = '#dc143c'; // crimson border
+        ctx.lineWidth = 6;
+        ctx.strokeRect(8, 8, width - 16, height - 16);
+        
+        ctx.font = '36px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🍒', 24, 24);
+        ctx.fillText('🍒', width - 24, 24);
+        ctx.fillText('🍒', 24, height - 24);
+        ctx.fillText('🍒', width - 24, height - 24);
       } else {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, width, height);
@@ -255,9 +270,9 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
       }
 
       // 5. Draw Text
-      if (['polaroid', 'minimal-gold', 'soft-glow', 'cherry-blossom', 'pastel-dream'].includes(frame)) {
+      if (['polaroid', 'minimal-gold', 'soft-glow', 'cherry-blossom', 'pastel-dream', 'sweet-cherries'].includes(frame)) {
          ctx.font = 'bold 36px "Brush Script MT", cursive';
-         ctx.fillStyle = frame === 'cherry-blossom' ? '#ff69b4' : '#d4af37';
+         ctx.fillStyle = frame === 'cherry-blossom' ? '#ff69b4' : frame === 'sweet-cherries' ? '#dc143c' : '#d4af37';
          ctx.textAlign = 'center';
          const textY = frame === 'polaroid' ? height - 35 : height - 20;
          
@@ -265,7 +280,7 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
          const textWidth = 360;
          ctx.fillRect((width/2) - (textWidth/2), textY - 32, textWidth, 42); // pill background
          
-         ctx.fillStyle = frame === 'cherry-blossom' ? '#ff69b4' : (frame === 'pastel-dream' ? '#d8b4fe' : '#d4af37');
+         ctx.fillStyle = frame === 'cherry-blossom' ? '#ff69b4' : (frame === 'pastel-dream' ? '#d8b4fe' : frame === 'sweet-cherries' ? '#dc143c' : '#d4af37');
          ctx.fillText("Zaara's 17th Birthday", width / 2, textY);
       }
 
@@ -327,7 +342,7 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
               <h3 className="text-xl font-cursive text-pink-800 mb-4">Choose a Frame</h3>
               <div className="grid grid-cols-2 gap-3">
-                {(['none', 'polaroid', 'minimal-gold', 'soft-glow', 'film', 'cherry-blossom', 'neon-cyber', 'pastel-dream'] as FrameType[]).map((f) => (
+                {(['none', 'polaroid', 'minimal-gold', 'soft-glow', 'film', 'cherry-blossom', 'neon-cyber', 'pastel-dream', 'sweet-cherries'] as FrameType[]).map((f) => (
                   <button key={f} onClick={() => setFrame(f)}
                     className={`p-4 rounded-2xl capitalize font-medium transition-all ${frame === f ? 'bg-pink-500 text-white shadow-md scale-105' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'}`}
                   >
@@ -394,10 +409,19 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
             frame === 'cherry-blossom' ? 'p-5 bg-[#fff0f5] border-[12px] border-[#ffb7c5] shadow-2xl' :
             frame === 'neon-cyber' ? 'p-4 bg-[#050505] border-[4px] border-cyan-400 shadow-[0_0_15px_#0ff,inset_0_0_15px_#0ff]' :
             frame === 'pastel-dream' ? 'p-6 bg-gradient-to-tr from-purple-200 via-pink-200 to-yellow-200 shadow-2xl' :
+            frame === 'sweet-cherries' ? 'p-7 bg-[#ffe4e1] border-8 border-[#dc143c] shadow-2xl' :
             'p-0 bg-white shadow-2xl'
           }`}
           style={{ width: mode === 'SINGLE' ? '640px' : '400px' }}
         >
+          {frame === 'sweet-cherries' && (
+            <>
+              <div className="absolute top-1 left-2 text-2xl z-10 pointer-events-none">🍒</div>
+              <div className="absolute top-1 right-2 text-2xl z-10 pointer-events-none">🍒</div>
+              <div className="absolute bottom-1 left-2 text-2xl z-10 pointer-events-none">🍒</div>
+              <div className="absolute bottom-1 right-2 text-2xl z-10 pointer-events-none">🍒</div>
+            </>
+          )}
           {frame === 'film' && (
             <div className="absolute inset-y-0 left-[-20px] w-4 flex flex-col justify-around py-4 opacity-50">
               {[...Array(10)].map((_, i) => <div key={`l-${i}`} className="w-full h-6 bg-white rounded-sm"></div>)}
