@@ -280,7 +280,7 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
                     className="aspect-square bg-gray-50 border border-gray-100 rounded-2xl hover:border-pink-300 hover:shadow-md hover:bg-white flex flex-col items-center justify-center transition-all p-2 group"
                   >
                     <div className="flex-1 w-full flex items-center justify-center pointer-events-none transform group-hover:scale-110 transition-transform">
-                      {s.src ? <img src={s.src} className="w-12 h-12 object-contain" alt={s.name} /> : <div style={{ transform: 'scale(0.4)' }}>{s.content}</div>}
+                      <img src={s.src} className="w-12 h-12 object-contain" alt={s.name} />
                     </div>
                     <span className="text-[10px] text-gray-500 font-medium mt-1 uppercase tracking-wider">{s.name}</span>
                   </button>
@@ -396,11 +396,7 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
                   
                   {/* Content (This rotates) */}
                   <div className="w-full h-full flex items-center justify-center pointer-events-none" style={{ transform: `rotate(${sticker.r || 0}deg)` }}>
-                    {sticker.s.src ? 
-                      <img src={sticker.s.src} crossOrigin="anonymous" className="w-full h-full object-contain pointer-events-none" alt={sticker.s.name} /> 
-                      : 
-                      <div className="w-full h-full pointer-events-none flex items-center justify-center">{sticker.s.content}</div>
-                    }
+                    <img src={sticker.s.src} crossOrigin="anonymous" className="w-full h-full object-contain pointer-events-none" alt={sticker.s.name} /> 
                   </div>
                 </div>
               </Rnd>
