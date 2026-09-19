@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Rnd } from 'react-rnd';
 import { Type, Image as ImageIcon, Wand2, Star, Sparkles } from 'lucide-react';
 import { savePhotoLocally } from '../utils/db';
@@ -61,8 +61,32 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
   const [editorTab, setEditorTab] = useState<EditorTab>('STICKERS');
   const [filter, setFilter] = useState<FilterType>('none');
   const [frame, setFrame] = useState<FrameType>('none');
+  const [activeCategory, setActiveCategory] = useState<StickerCategory>('Vibes');
+  const [viewportScale, setViewportScale] = useState(1);
+
+  useEffect(() => {
+    const updateScale = () => {
+      if (typeof window !== 'undefined') {
+        const targetWidth = mode === 'SINGLE' ? 640 : 400;
+        // The container width minus padding (32px)
+        // If window is smaller than md (768px), it's taking full width. 
+        // If md or larger, the container is window.innerWidth - 384px (sidebar width).
+        const isMobile = window.innerWidth < 768;
+        const availableWidth = isMobile ? window.innerWidth - 32 : window.innerWidth - 384 - 64; 
+        
+        if (availableWidth < targetWidth) {
+          setViewportScale(availableWidth / targetWidth);
+        } else {
+          setViewportScale(1);
+        }
+      }
+    };
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, [mode]);
+
   const [activeStickers, setActiveStickers] = useState<{id: string, s: StickerDef, key: number, x: number, y: number, r: number, w: number, h: number}[]>([]);
-  const [activeCategory, setActiveCategory] = useState<StickerCategory>('Party');
   const [isProcessing, setIsProcessing] = useState(false);
   const captureRef = useRef<HTMLDivElement>(null);
   const [stickerCounter, setStickerCounter] = useState(0);
@@ -305,8 +329,8 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
   };
 
   return (
-    <div className="w-full h-full flex flex-row bg-[#fdf2f8] z-50 relative">
-      <div className="w-96 bg-white/95 backdrop-blur-md shadow-[20px_0_40px_-15px_rgba(255,182,193,0.3)] border-r border-pink-100 flex flex-col z-50 overflow-hidden">
+    <div className="w-full h-full flex flex-col md:flex-row bg-[#fdf2f8] z-50 relative">
+      <div className="w-full md:w-96 bg-white/95 backdrop-blur-md shadow-[20px_0_40px_-15px_rgba(255,182,193,0.3)] border-t md:border-t-0 md:border-r border-pink-100 flex flex-col z-50 overflow-hidden order-last md:order-first">
         
         {/* Editor Tab Navigation */}
         <div className="flex border-b border-pink-100 bg-pink-50/50 p-2 gap-2">
@@ -412,7 +436,12 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
             frame === 'sweet-cherries' ? 'p-7 bg-[#ffe4e1] border-8 border-[#dc143c] shadow-2xl' :
             'p-0 bg-white shadow-2xl'
           }`}
-          style={{ width: mode === 'SINGLE' ? '640px' : '400px' }}
+          style={{ 
+            width: mode === 'SINGLE' ? '640px' : '400px',
+            transform: viewportScale < 1 ? `scale(${viewportScale})` : 'none',
+            transformOrigin: 'top center',
+            marginBottom: viewportScale < 1 ? `-${(1 - viewportScale) * 100}%` : '0'
+          }}
         >
           {frame === 'sweet-cherries' && (
             <>
@@ -443,6 +472,7 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
             {activeStickers.map(sticker => (
               <Rnd
                 key={sticker.key}
+                scale={viewportScale}
                 default={{
                   x: sticker.x,
                   y: sticker.y,

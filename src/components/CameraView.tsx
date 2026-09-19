@@ -52,16 +52,16 @@ export default function CameraView({ mode, onCapture, onCancel }: CameraViewProp
   };
 
   return (
-    <div className="relative w-full h-full flex flex-col items-center justify-center bg-[#fdf2f8] z-50">
+    <div className="relative w-full h-full flex flex-col items-center justify-center bg-[#fdf2f8] z-50 p-4">
       <button 
         onClick={onCancel}
-        className="absolute top-8 left-8 text-pink-800 z-50 p-4 bg-white rounded-full shadow-md hover:bg-pink-50"
+        className="absolute top-4 left-4 md:top-8 md:left-8 text-pink-800 z-50 p-3 md:p-4 bg-white rounded-full shadow-md hover:bg-pink-50"
       >
         <X size={32} />
       </button>
 
-      <div className="flex flex-col items-center justify-center space-y-12 bg-white/80 p-16 rounded-[3rem] shadow-xl backdrop-blur-md border border-white/50 text-center max-w-2xl">
-        <h2 className="text-5xl font-cursive text-pink-800 drop-shadow-sm">
+      <div className="flex flex-col items-center justify-center space-y-8 md:space-y-12 bg-white/80 p-8 md:p-16 rounded-[2rem] md:rounded-[3rem] shadow-xl backdrop-blur-md border border-white/50 text-center max-w-2xl w-full">
+        <h2 className="text-4xl md:text-5xl font-cursive text-pink-800 drop-shadow-sm">
           {mode === 'STRIP' ? `Photo ${captured.length + 1} of 4` : 'Ready for your close-up?'}
         </h2>
         
