@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Trash2 } from 'lucide-react';
-import { getAllPhotosLocally } from '../utils/db';
+import { getAllPhotosLocally, deletePhotoLocally } from '../utils/db';
 
 interface GalleryViewProps {
   onClose: () => void;
 }
 
+type PhotoRecord = { id: string, dataUrl: string, createdAt: number };
+
 export default function GalleryView({ onClose }: GalleryViewProps) {
-  const [photos, setPhotos] = useState<string[]>([]);
+  const [photos, setPhotos] = useState<PhotoRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,6 +18,13 @@ export default function GalleryView({ onClose }: GalleryViewProps) {
       setLoading(false);
     });
   }, []);
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure you want to delete this photo?')) {
+      await deletePhotoLocally(id);
+      setPhotos(photos.filter(p => p.id !== id));
+    }
+  };
 
   return (
     <div className="w-full h-full flex flex-col bg-[#fdf2f8] z-50 p-8 overflow-y-auto">
@@ -36,9 +45,15 @@ export default function GalleryView({ onClose }: GalleryViewProps) {
         </div>
       ) : (
         <div className="columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6 pb-20">
-          {photos.map((url, i) => (
-            <div key={i} className="break-inside-avoid bg-white p-3 rounded-2xl shadow-lg border border-pink-100 hover:shadow-xl transition-shadow transform hover:-translate-y-1">
-              <img src={url} alt={`Gallery ${i}`} className="w-full h-auto rounded-lg" />
+          {photos.map((photo) => (
+            <div key={photo.id} className="break-inside-avoid bg-white p-3 rounded-2xl shadow-lg border border-pink-100 hover:shadow-xl transition-shadow transform hover:-translate-y-1 relative group">
+              <img src={photo.dataUrl} alt="Gallery" className="w-full h-auto rounded-lg" />
+              <button 
+                onClick={() => handleDelete(photo.id)}
+                className="absolute top-6 right-6 p-3 bg-white/90 text-red-500 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+              >
+                <Trash2 size={24} />
+              </button>
             </div>
           ))}
         </div>

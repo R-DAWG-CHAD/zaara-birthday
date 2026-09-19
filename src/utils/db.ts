@@ -46,9 +46,15 @@ export async function getPhotoLocally(id: string): Promise<string | null> {
   return photo ? photo.dataUrl : null;
 }
 
-export async function getAllPhotosLocally(): Promise<string[]> {
+export async function getAllPhotosLocally(): Promise<{id: string, dataUrl: string, createdAt: number}[]> {
   const db = await getDB();
   if (!db) return [];
   const photos = await db.getAll('photos');
-  return photos.sort((a, b) => b.createdAt - a.createdAt).map(p => p.dataUrl);
+  return photos.sort((a, b) => b.createdAt - a.createdAt);
+}
+
+export async function deletePhotoLocally(id: string): Promise<void> {
+  const db = await getDB();
+  if (!db) return;
+  await db.delete('photos', id);
 }
