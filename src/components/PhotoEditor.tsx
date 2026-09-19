@@ -293,7 +293,7 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
 
           {(frame === 'polaroid' || frame === 'minimal-gold' || frame === 'soft-glow') && (
             <div className={`absolute w-full text-center z-10 pointer-events-none left-0 ${frame === 'polaroid' ? 'bottom-8' : 'bottom-6'}`}>
-              <h1 className="text-4xl font-cursive text-[#d4af37] drop-shadow-sm font-bold bg-white/80 inline-block px-6 py-2 rounded-full backdrop-blur-sm">Zaara's 17th Birthday</h1>
+              <h1 className="text-4xl font-cursive text-[#d4af37] font-bold bg-white/90 inline-block px-6 py-2 rounded-full shadow-sm">Zaara's 17th Birthday</h1>
             </div>
           )}
         </div>
