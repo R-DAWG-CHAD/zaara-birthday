@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
-import * as htmlToImage from 'html-to-image';
+import React, { useState, useRef, useEffect } from 'react';
+import domToImage from 'dom-to-image-more';
 import { Rnd } from 'react-rnd';
 import { Type, Image as ImageIcon, Wand2, Star, Sparkles } from 'lucide-react';
 import { savePhotoLocally } from '../utils/db';
@@ -68,6 +68,52 @@ const STICKERS: Record<StickerCategory, StickerDef[]> = {
   ]
 };
 
+// Custom canvas renderer to strictly bypass Safari's foreignObject img drop bug
+function PhotoCanvas({ src, className }: { src: string, className?: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => {
+      if (canvasRef.current) {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        
+        // Calculate object-fit: cover equivalent
+        const rect = canvas.getBoundingClientRect();
+        // Fallback to 400x300 if rect is zero (during hidden state)
+        const canvasW = rect.width || 400;
+        const canvasH = rect.height || 300;
+        
+        canvas.width = canvasW * 2; // High-DPI
+        canvas.height = canvasH * 2;
+        
+        const imgRatio = img.width / img.height;
+        const canvasRatio = canvas.width / canvas.height;
+        
+        let drawWidth = canvas.width;
+        let drawHeight = canvas.height;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        if (imgRatio > canvasRatio) {
+          drawWidth = img.width * (canvas.height / img.height);
+          offsetX = (canvas.width - drawWidth) / 2;
+        } else {
+          drawHeight = img.height * (canvas.width / img.width);
+          offsetY = (canvas.height - drawHeight) / 2;
+        }
+
+        ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+      }
+    };
+    img.src = src;
+  }, [src]);
+
+  return <canvas ref={canvasRef} className={className} style={{ width: '100%', height: '100%' }} />;
+}
+
 export default function PhotoEditor({ photos, mode, onComplete, onCancel }: PhotoEditorProps) {
   const [editorTab, setEditorTab] = useState<EditorTab>('STICKERS');
   const [filter, setFilter] = useState<FilterType>('none');
@@ -109,12 +155,15 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
     document.head.appendChild(hideStyle);
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise(resolve => setTimeout(resolve, 100)); // Paint wait
 
-      const dataUrl = await htmlToImage.toJpeg(captureRef.current, {
+      const dataUrl = await domToImage.toJpeg(captureRef.current, {
         quality: 0.9,
-        pixelRatio: 1.5,
-        backgroundColor: '#ffffff'
+        bgcolor: '#ffffff',
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left'
+        }
       });
       
       savePhotoLocally(dataUrl).catch(e => console.warn("Failed to save to local DB:", e));
@@ -258,7 +307,7 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
 
             <div className={`w-full overflow-hidden flex flex-col relative pointer-events-none ${frame === 'soft-glow' ? 'rounded-2xl' : ''}`} style={{ filter: getFilterStyle(), gap: mode === 'STRIP' ? '12px' : '0' }}>
             {photos.map((p, i) => (
-              <img key={i} src={p} className={`w-full object-cover ${mode === 'STRIP' ? 'aspect-[4/3] rounded-sm' : 'aspect-[4/3]'}`} alt={`Shot ${i}`} />
+              <PhotoCanvas key={i} src={p} className={`w-full block ${mode === 'STRIP' ? 'aspect-[4/3] rounded-sm' : 'aspect-[4/3]'}`} />
             ))}
           </div>
 

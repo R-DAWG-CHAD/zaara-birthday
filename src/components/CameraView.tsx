@@ -22,7 +22,7 @@ export default function CameraView({ mode, onCapture, onCancel }: CameraViewProp
           const img = new Image();
           img.onload = () => {
             const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 1200;
+            const MAX_WIDTH = 600;
             const scale = Math.min(MAX_WIDTH / img.width, 1);
             canvas.width = img.width * scale;
             canvas.height = img.height * scale;
@@ -30,7 +30,7 @@ export default function CameraView({ mode, onCapture, onCancel }: CameraViewProp
             const ctx = canvas.getContext('2d');
             if (ctx) {
               ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-              const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+              const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
               
               const newCaptured = [...captured, compressedDataUrl];
               setCaptured(newCaptured);
