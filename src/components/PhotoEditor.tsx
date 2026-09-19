@@ -39,32 +39,32 @@ const STICKERS: Record<StickerCategory, StickerDef[]> = {
         <path d="M 10,30 L 0,30 M 190,30 L 200,30" stroke="#ff69b4" strokeWidth="6" strokeLinecap="round"/>
       </svg>
     )},
-    { id: 'dark-shades', name: 'Dark Shades', width: 200, height: 70, src: `${TWEMOJI_BASE}1f576.svg` }
+    { id: 'dark-shades', name: 'Dark Shades', width: 120, height: 120, content: <div className="text-[100px] leading-none flex items-center justify-center w-full h-full">😎</div> }
   ],
   Party: [
-    { id: 'crown', name: 'Crown', width: 120, height: 120, src: `${TWEMOJI_BASE}1f451.svg` },
-    { id: 'popper', name: 'Popper', width: 120, height: 120, src: `${TWEMOJI_BASE}1f389.svg` },
-    { id: 'cake', name: 'Cake', width: 120, height: 120, src: `${TWEMOJI_BASE}1f382.svg` },
-    { id: 'balloon', name: 'Balloon', width: 100, height: 120, src: `${TWEMOJI_BASE}1f388.svg` },
-    { id: 'confetti', name: 'Confetti', width: 120, height: 120, src: `${TWEMOJI_BASE}1f38a.svg` },
-    { id: 'gift', name: 'Gift', width: 100, height: 100, src: `${TWEMOJI_BASE}1f381.svg` },
-    { id: 'disco', name: 'Disco Ball', width: 120, height: 120, src: `${TWEMOJI_BASE}1faa9.svg` }
+    { id: 'crown', name: 'Crown', width: 120, height: 120, content: <div className="text-[100px] leading-none flex items-center justify-center w-full h-full">👑</div> },
+    { id: 'popper', name: 'Popper', width: 120, height: 120, content: <div className="text-[100px] leading-none flex items-center justify-center w-full h-full">🎉</div> },
+    { id: 'cake', name: 'Cake', width: 120, height: 120, content: <div className="text-[100px] leading-none flex items-center justify-center w-full h-full">🎂</div> },
+    { id: 'balloon', name: 'Balloon', width: 100, height: 120, content: <div className="text-[100px] leading-none flex items-center justify-center w-full h-full">🎈</div> },
+    { id: 'confetti', name: 'Confetti', width: 120, height: 120, content: <div className="text-[100px] leading-none flex items-center justify-center w-full h-full">🎊</div> },
+    { id: 'gift', name: 'Gift', width: 100, height: 100, content: <div className="text-[100px] leading-none flex items-center justify-center w-full h-full">🎁</div> },
+    { id: 'disco', name: 'Disco Ball', width: 120, height: 120, content: <div className="text-[100px] leading-none flex items-center justify-center w-full h-full">🪩</div> }
   ],
   Nature: [
-    { id: 'rose', name: 'Rose', width: 100, height: 100, src: `${TWEMOJI_BASE}1f339.svg` },
-    { id: 'hibiscus', name: 'Hibiscus', width: 100, height: 100, src: `${TWEMOJI_BASE}1f33a.svg` },
-    { id: 'blossom', name: 'Blossom', width: 100, height: 100, src: `${TWEMOJI_BASE}1f338.svg` },
-    { id: 'sunflower', name: 'Sunflower', width: 100, height: 100, src: `${TWEMOJI_BASE}1f33b.svg` },
-    { id: 'butterfly', name: 'Butterfly', width: 100, height: 100, src: `${TWEMOJI_BASE}1f98b.svg` }
+    { id: 'rose', name: 'Rose', width: 100, height: 100, content: <div className="text-[100px] leading-none flex items-center justify-center w-full h-full">🌹</div> },
+    { id: 'hibiscus', name: 'Hibiscus', width: 100, height: 100, content: <div className="text-[100px] leading-none flex items-center justify-center w-full h-full">🌺</div> },
+    { id: 'blossom', name: 'Blossom', width: 100, height: 100, content: <div className="text-[100px] leading-none flex items-center justify-center w-full h-full">🌸</div> },
+    { id: 'sunflower', name: 'Sunflower', width: 100, height: 100, content: <div className="text-[100px] leading-none flex items-center justify-center w-full h-full">🌻</div> },
+    { id: 'butterfly', name: 'Butterfly', width: 100, height: 100, content: <div className="text-[100px] leading-none flex items-center justify-center w-full h-full">🦋</div> }
   ],
   Vibes: [
-    { id: 'sparkles', name: 'Sparkles', width: 100, height: 100, src: `${TWEMOJI_BASE}2728.svg` },
-    { id: 'sparkling-heart', name: 'Pink Heart', width: 100, height: 100, src: `${TWEMOJI_BASE}1f496.svg` },
-    { id: 'red-heart', name: 'Red Heart', width: 100, height: 100, src: `${TWEMOJI_BASE}2764.svg` },
-    { id: 'star', name: 'Star', width: 100, height: 100, src: `${TWEMOJI_BASE}1f31f.svg` },
-    { id: 'magic-wand', name: 'Magic Wand', width: 120, height: 120, src: `${TWEMOJI_BASE}1fa84.svg` },
-    { id: 'kiss', name: 'Kiss', width: 100, height: 80, src: `${TWEMOJI_BASE}1f48b.svg` },
-    { id: 'diamond', name: 'Diamond', width: 100, height: 100, src: `${TWEMOJI_BASE}1f48e.svg` }
+    { id: 'sparkles', name: 'Sparkles', width: 100, height: 100, content: <div className="text-[100px] leading-none flex items-center justify-center w-full h-full">✨</div> },
+    { id: 'sparkling-heart', name: 'Pink Heart', width: 100, height: 100, content: <div className="text-[100px] leading-none flex items-center justify-center w-full h-full">💖</div> },
+    { id: 'red-heart', name: 'Red Heart', width: 100, height: 100, content: <div className="text-[100px] leading-none flex items-center justify-center w-full h-full">❤️</div> },
+    { id: 'star', name: 'Star', width: 100, height: 100, content: <div className="text-[100px] leading-none flex items-center justify-center w-full h-full">🌟</div> },
+    { id: 'magic-wand', name: 'Magic Wand', width: 120, height: 120, content: <div className="text-[100px] leading-none flex items-center justify-center w-full h-full">🪄</div> },
+    { id: 'kiss', name: 'Kiss', width: 100, height: 80, content: <div className="text-[100px] leading-none flex items-center justify-center w-full h-full">💋</div> },
+    { id: 'diamond', name: 'Diamond', width: 100, height: 100, content: <div className="text-[100px] leading-none flex items-center justify-center w-full h-full">💎</div> }
   ]
 };
 
@@ -102,6 +102,9 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
     if (!captureRef.current) return;
     setIsProcessing(true);
     
+    const scrollArea = document.getElementById('editor-scroll-area');
+    const originalScroll = scrollArea ? scrollArea.scrollTop : 0;
+    
     // Create a strict stylesheet to hide all controls before snapshotting
     const hideStyle = document.createElement('style');
     hideStyle.innerHTML = `
@@ -111,22 +114,26 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
     document.head.appendChild(hideStyle);
     
     try {
-      // Wait for browser paint
+      if (scrollArea) scrollArea.scrollTop = 0; // Fix Safari scroll cropping
       await new Promise(resolve => setTimeout(resolve, 50));
 
       const canvas = await html2canvas(captureRef.current, {
         scale: 1.5,
         backgroundColor: '#ffffff',
-        useCORS: true
+        useCORS: true,
+        scrollX: 0,
+        scrollY: -window.scrollY
       });
       
       const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
       savePhotoLocally(dataUrl).catch(e => console.warn("Failed to save to local DB:", e));
       
+      if (scrollArea) scrollArea.scrollTop = originalScroll;
       if (document.head.contains(hideStyle)) document.head.removeChild(hideStyle);
       onComplete(dataUrl);
     } catch (err) {
       console.error("Save Error:", err);
+      if (scrollArea) scrollArea.scrollTop = originalScroll;
       if (document.head.contains(hideStyle)) document.head.removeChild(hideStyle);
       setIsProcessing(false);
       alert("Failed to render photo.");
@@ -285,7 +292,7 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
                   bottomRight: { width: '26px', height: '26px', background: '#ff1493', border: '3px solid white', borderRadius: '50%', right: '-13px', bottom: '-13px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }
                 }}
               >
-                <div className="w-full h-full relative" style={{ transform: `rotate(${sticker.r || 0}deg)` }}>
+                <div className="w-full h-full relative">
                   
                   {/* Rotation handle */}
                   <div 
@@ -324,12 +331,14 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
                     ×
                   </button>
                   
-                  {/* Content */}
-                  {sticker.s.src ? 
-                    <img src={sticker.s.src + "?v=pb1"} crossOrigin="anonymous" className="w-full h-full object-contain pointer-events-none" alt={sticker.s.name} /> 
-                    : 
-                    <div className="w-full h-full pointer-events-none">{sticker.s.content}</div>
-                  }
+                  {/* Content (This rotates) */}
+                  <div className="w-full h-full flex items-center justify-center pointer-events-none" style={{ transform: `rotate(${sticker.r || 0}deg)` }}>
+                    {sticker.s.src ? 
+                      <img src={sticker.s.src} crossOrigin="anonymous" className="w-full h-full object-contain pointer-events-none" alt={sticker.s.name} /> 
+                      : 
+                      <div className="w-full h-full pointer-events-none flex items-center justify-center">{sticker.s.content}</div>
+                    }
+                  </div>
                 </div>
               </Rnd>
             ))}
