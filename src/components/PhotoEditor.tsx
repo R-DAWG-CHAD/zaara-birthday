@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from 'react';
-import html2canvas from 'html2canvas';
+import * as htmlToImage from 'html-to-image';
 import { Rnd } from 'react-rnd';
 import { Type, Image as ImageIcon, Wand2, Star, Sparkles } from 'lucide-react';
 import { savePhotoLocally } from '../utils/db';
@@ -103,12 +103,15 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
     elementsToHide.forEach(h => (h as HTMLElement).style.display = 'none');
     
     try {
-      const canvas = await html2canvas(captureRef.current, {
-        scale: 1.5,
+      // Short delay so React applies the display:none properly before render
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const dataUrl = await htmlToImage.toJpeg(captureRef.current, {
+        quality: 0.9,
+        pixelRatio: 1.5,
         backgroundColor: '#ffffff',
-        useCORS: true,
+        cacheBust: true
       });
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
       
       savePhotoLocally(dataUrl).catch(e => console.warn("Failed to save to local DB:", e));
       onComplete(dataUrl);
