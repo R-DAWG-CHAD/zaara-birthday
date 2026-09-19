@@ -13,7 +13,7 @@ interface PhotoEditorProps {
 }
 
 type FilterType = 'none' | 'vintage' | 'bw' | 'vibrant';
-type FrameType = 'none' | 'polaroid' | 'minimal-gold' | 'soft-glow' | 'film';
+type FrameType = 'none' | 'polaroid' | 'minimal-gold' | 'soft-glow' | 'film' | 'cherry-blossom' | 'neon-cyber' | 'pastel-dream';
 type EditorTab = 'FILTERS' | 'FRAMES' | 'STICKERS';
 type StickerCategory = 'Glasses' | 'Party' | 'Nature' | 'Vibes';
 
@@ -103,6 +103,9 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
       else if (frame === 'minimal-gold') { pTop = 12; pRight = 12; pLeft = 12; pBottom = 12; }
       else if (frame === 'soft-glow') { pTop = 16; pRight = 16; pLeft = 16; pBottom = 16; }
       else if (frame === 'film') { pTop = 24; pRight = 48; pLeft = 48; pBottom = 24; }
+      else if (frame === 'cherry-blossom') { pTop = 20; pRight = 20; pLeft = 20; pBottom = 20; }
+      else if (frame === 'neon-cyber') { pTop = 16; pRight = 16; pLeft = 16; pBottom = 16; }
+      else if (frame === 'pastel-dream') { pTop = 24; pRight = 24; pLeft = 24; pBottom = 24; }
 
       const photoWidth = width - pLeft - pRight;
       const photoHeight = photoWidth * 0.75; // 4/3
@@ -134,6 +137,28 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
         ctx.strokeStyle = '#d4af37';
         ctx.lineWidth = 6;
         ctx.strokeRect(3, 3, width - 6, height - 6);
+      } else if (frame === 'cherry-blossom') {
+        ctx.fillStyle = '#fff0f5';
+        ctx.fillRect(0, 0, width, height);
+        ctx.strokeStyle = '#ffb7c5';
+        ctx.lineWidth = 12;
+        ctx.strokeRect(6, 6, width - 12, height - 12);
+      } else if (frame === 'neon-cyber') {
+        ctx.fillStyle = '#050505';
+        ctx.fillRect(0, 0, width, height);
+        ctx.strokeStyle = '#00ffff';
+        ctx.lineWidth = 4;
+        ctx.shadowColor = '#00ffff';
+        ctx.shadowBlur = 15;
+        ctx.strokeRect(2, 2, width - 4, height - 4);
+        ctx.shadowBlur = 0; // reset
+      } else if (frame === 'pastel-dream') {
+        const grad = ctx.createLinearGradient(0, 0, width, height);
+        grad.addColorStop(0, '#e9d5ff'); // purple-200
+        grad.addColorStop(0.5, '#fbcfe8'); // pink-200
+        grad.addColorStop(1, '#fef08a'); // yellow-200
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, width, height);
       } else {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, width, height);
@@ -230,9 +255,9 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
       }
 
       // 5. Draw Text
-      if (frame === 'polaroid' || frame === 'minimal-gold' || frame === 'soft-glow') {
+      if (['polaroid', 'minimal-gold', 'soft-glow', 'cherry-blossom', 'pastel-dream'].includes(frame)) {
          ctx.font = 'bold 36px "Brush Script MT", cursive';
-         ctx.fillStyle = '#d4af37';
+         ctx.fillStyle = frame === 'cherry-blossom' ? '#ff69b4' : '#d4af37';
          ctx.textAlign = 'center';
          const textY = frame === 'polaroid' ? height - 35 : height - 20;
          
@@ -240,7 +265,7 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
          const textWidth = 360;
          ctx.fillRect((width/2) - (textWidth/2), textY - 32, textWidth, 42); // pill background
          
-         ctx.fillStyle = '#d4af37';
+         ctx.fillStyle = frame === 'cherry-blossom' ? '#ff69b4' : (frame === 'pastel-dream' ? '#d8b4fe' : '#d4af37');
          ctx.fillText("Zaara's 17th Birthday", width / 2, textY);
       }
 
@@ -302,7 +327,7 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
               <h3 className="text-xl font-cursive text-pink-800 mb-4">Choose a Frame</h3>
               <div className="grid grid-cols-2 gap-3">
-                {(['none', 'polaroid', 'minimal-gold', 'soft-glow', 'film'] as FrameType[]).map((f) => (
+                {(['none', 'polaroid', 'minimal-gold', 'soft-glow', 'film', 'cherry-blossom', 'neon-cyber', 'pastel-dream'] as FrameType[]).map((f) => (
                   <button key={f} onClick={() => setFrame(f)}
                     className={`p-4 rounded-2xl capitalize font-medium transition-all ${frame === f ? 'bg-pink-500 text-white shadow-md scale-105' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'}`}
                   >
@@ -361,12 +386,15 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
       <div id="editor-scroll-area" className="flex-1 overflow-y-auto overflow-x-hidden relative flex flex-col items-center justify-center p-8">
         <div 
           ref={captureRef}
-          className={`relative bg-white shadow-2xl flex flex-col transition-all duration-300 ${
-            frame === 'polaroid' ? 'p-6 pb-28 border border-gray-100 rounded-sm' : 
-            frame === 'minimal-gold' ? 'p-3 border-[6px] border-[#d4af37] bg-white' : 
+          className={`relative flex flex-col transition-all duration-300 ${
+            frame === 'polaroid' ? 'p-6 pb-28 border border-gray-100 rounded-sm bg-white shadow-2xl' : 
+            frame === 'minimal-gold' ? 'p-3 border-[6px] border-[#d4af37] bg-white shadow-2xl' : 
             frame === 'soft-glow' ? 'p-4 bg-white rounded-3xl shadow-[0_0_40px_rgba(255,182,193,0.8)]' : 
-            frame === 'film' ? 'p-6 bg-black border-x-[24px] border-x-gray-900' : 
-            'p-0'
+            frame === 'film' ? 'p-6 bg-black border-x-[24px] border-x-gray-900 shadow-2xl' : 
+            frame === 'cherry-blossom' ? 'p-5 bg-[#fff0f5] border-[12px] border-[#ffb7c5] shadow-2xl' :
+            frame === 'neon-cyber' ? 'p-4 bg-[#050505] border-[4px] border-cyan-400 shadow-[0_0_15px_#0ff,inset_0_0_15px_#0ff]' :
+            frame === 'pastel-dream' ? 'p-6 bg-gradient-to-tr from-purple-200 via-pink-200 to-yellow-200 shadow-2xl' :
+            'p-0 bg-white shadow-2xl'
           }`}
           style={{ width: mode === 'SINGLE' ? '640px' : '400px' }}
         >
@@ -458,9 +486,9 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
             ))}
           </div>
 
-          {(frame === 'polaroid' || frame === 'minimal-gold' || frame === 'soft-glow') && (
+          {['polaroid', 'minimal-gold', 'soft-glow', 'cherry-blossom', 'pastel-dream'].includes(frame) && (
             <div className={`absolute w-full text-center z-10 pointer-events-none left-0 ${frame === 'polaroid' ? 'bottom-8' : 'bottom-6'}`}>
-              <h1 className="text-4xl font-cursive text-[#d4af37] font-bold bg-white/90 inline-block px-6 py-2 rounded-full">Zaara's 17th Birthday</h1>
+              <h1 className={`text-4xl font-cursive font-bold bg-white/90 inline-block px-6 py-2 rounded-full ${frame === 'cherry-blossom' ? 'text-pink-400' : frame === 'pastel-dream' ? 'text-purple-400' : 'text-[#d4af37]'}`}>Zaara's 17th Birthday</h1>
             </div>
           )}
         </div>
