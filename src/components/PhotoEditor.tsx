@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
-import domToImage from 'dom-to-image-more';
+import React, { useState, useRef } from 'react';
 import { Rnd } from 'react-rnd';
 import { Type, Image as ImageIcon, Wand2, Star, Sparkles } from 'lucide-react';
 import { savePhotoLocally } from '../utils/db';
@@ -20,25 +19,15 @@ type StickerCategory = 'Glasses' | 'Party' | 'Nature' | 'Vibes';
 
 const TWEMOJI_BASE = "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/";
 
-type StickerDef = { id: string, name: string, width: number, height: number, src?: string, content?: React.ReactNode };
+const heartGlassesSvg = `data:image/svg+xml;charset=utf-8,${encodeURIComponent('<svg viewBox="0 0 200 90" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M 50,80 Q 20,50 10,30 A 20,20 0 0,1 50,15 A 20,20 0 0,1 90,30 Q 80,50 50,80 Z" fill="rgba(255,20,147,0.4)" stroke="#ff1493" stroke-width="6" stroke-linejoin="round"/><path d="M 150,80 Q 120,50 110,30 A 20,20 0 0,1 150,15 A 20,20 0 0,1 190,30 Q 180,50 150,80 Z" fill="rgba(255,20,147,0.4)" stroke="#ff1493" stroke-width="6" stroke-linejoin="round"/><path d="M 90,25 Q 100,15 110,25" fill="none" stroke="#ff1493" stroke-width="6" stroke-linecap="round"/></svg>')}`;
+const pinkShadesSvg = `data:image/svg+xml;charset=utf-8,${encodeURIComponent('<svg viewBox="0 0 200 70" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="10" width="80" height="50" rx="15" fill="rgba(255,105,180,0.4)" stroke="#ff69b4" stroke-width="6"/><rect x="110" y="10" width="80" height="50" rx="15" fill="rgba(255,105,180,0.4)" stroke="#ff69b4" stroke-width="6"/><path d="M 90,30 Q 100,25 110,30" fill="none" stroke="#ff69b4" stroke-width="6" stroke-linecap="round"/><path d="M 10,30 L 0,30 M 190,30 L 200,30" stroke="#ff69b4" stroke-width="6" stroke-linecap="round"/></svg>')}`;
+
+type StickerDef = { id: string, name: string, width: number, height: number, src: string };
 
 const STICKERS: Record<StickerCategory, StickerDef[]> = {
   Glasses: [
-    { id: 'heart-glasses', name: 'Heart Shades', width: 200, height: 90, content: (
-      <svg viewBox="0 0 200 90" fill="none" xmlns="http://www.w3.org/2000/svg" style={{width: '100%', height: '100%'}}>
-        <path d="M 50,80 Q 20,50 10,30 A 20,20 0 0,1 50,15 A 20,20 0 0,1 90,30 Q 80,50 50,80 Z" fill="rgba(255,20,147,0.4)" stroke="#ff1493" strokeWidth="6" strokeLinejoin="round"/>
-        <path d="M 150,80 Q 120,50 110,30 A 20,20 0 0,1 150,15 A 20,20 0 0,1 190,30 Q 180,50 150,80 Z" fill="rgba(255,20,147,0.4)" stroke="#ff1493" strokeWidth="6" strokeLinejoin="round"/>
-        <path d="M 90,25 Q 100,15 110,25" fill="none" stroke="#ff1493" strokeWidth="6" strokeLinecap="round"/>
-      </svg>
-    )},
-    { id: 'pink-shades', name: 'Pink Shades', width: 200, height: 70, content: (
-      <svg viewBox="0 0 200 70" fill="none" xmlns="http://www.w3.org/2000/svg" style={{width: '100%', height: '100%'}}>
-        <rect x="10" y="10" width="80" height="50" rx="15" fill="rgba(255,105,180,0.4)" stroke="#ff69b4" strokeWidth="6"/>
-        <rect x="110" y="10" width="80" height="50" rx="15" fill="rgba(255,105,180,0.4)" stroke="#ff69b4" strokeWidth="6"/>
-        <path d="M 90,30 Q 100,25 110,30" fill="none" stroke="#ff69b4" strokeWidth="6" strokeLinecap="round"/>
-        <path d="M 10,30 L 0,30 M 190,30 L 200,30" stroke="#ff69b4" strokeWidth="6" strokeLinecap="round"/>
-      </svg>
-    )},
+    { id: 'heart-glasses', name: 'Heart Shades', width: 200, height: 90, src: heartGlassesSvg },
+    { id: 'pink-shades', name: 'Pink Shades', width: 200, height: 70, src: pinkShadesSvg },
     { id: 'dark-shades', name: 'Dark Shades', width: 200, height: 70, src: `${TWEMOJI_BASE}1f576.svg` }
   ],
   Party: [
@@ -67,52 +56,6 @@ const STICKERS: Record<StickerCategory, StickerDef[]> = {
     { id: 'diamond', name: 'Diamond', width: 100, height: 100, src: `${TWEMOJI_BASE}1f48e.svg` }
   ]
 };
-
-// Custom canvas renderer to strictly bypass Safari's foreignObject img drop bug
-function PhotoCanvas({ src, className }: { src: string, className?: string }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const img = new Image();
-    img.onload = () => {
-      if (canvasRef.current) {
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        
-        // Calculate object-fit: cover equivalent
-        const rect = canvas.getBoundingClientRect();
-        // Fallback to 400x300 if rect is zero (during hidden state)
-        const canvasW = rect.width || 400;
-        const canvasH = rect.height || 300;
-        
-        canvas.width = canvasW * 2; // High-DPI
-        canvas.height = canvasH * 2;
-        
-        const imgRatio = img.width / img.height;
-        const canvasRatio = canvas.width / canvas.height;
-        
-        let drawWidth = canvas.width;
-        let drawHeight = canvas.height;
-        let offsetX = 0;
-        let offsetY = 0;
-
-        if (imgRatio > canvasRatio) {
-          drawWidth = img.width * (canvas.height / img.height);
-          offsetX = (canvas.width - drawWidth) / 2;
-        } else {
-          drawHeight = img.height * (canvas.width / img.width);
-          offsetY = (canvas.height - drawHeight) / 2;
-        }
-
-        ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
-      }
-    };
-    img.src = src;
-  }, [src]);
-
-  return <canvas ref={canvasRef} className={className} style={{ width: '100%', height: '100%' }} />;
-}
 
 export default function PhotoEditor({ photos, mode, onComplete, onCancel }: PhotoEditorProps) {
   const [editorTab, setEditorTab] = useState<EditorTab>('STICKERS');
@@ -144,35 +87,117 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
   };
 
   const handleComplete = async () => {
-    if (!captureRef.current) return;
     setIsProcessing(true);
     
-    const hideStyle = document.createElement('style');
-    hideStyle.innerHTML = `
-      .react-resizable-handle { display: none !important; opacity: 0 !important; }
-      .sticker-controls { display: none !important; opacity: 0 !important; }
-    `;
-    document.head.appendChild(hideStyle);
-    
     try {
-      await new Promise(resolve => setTimeout(resolve, 100)); // Paint wait
+      const isSingle = mode === 'SINGLE';
+      const width = isSingle ? 640 : 400;
 
-      const dataUrl = await domToImage.toJpeg(captureRef.current, {
-        quality: 0.9,
-        bgcolor: '#ffffff',
-        style: {
-          transform: 'scale(1)',
-          transformOrigin: 'top left'
+      // 1. Frame padding logic mapping
+      let pTop = 0, pRight = 0, pBottom = 0, pLeft = 0;
+      if (frame === 'polaroid') { pTop = 24; pRight = 24; pLeft = 24; pBottom = 112; }
+      else if (frame === 'minimal-gold') { pTop = 12; pRight = 12; pLeft = 12; pBottom = 12; }
+      else if (frame === 'soft-glow') { pTop = 16; pRight = 16; pLeft = 16; pBottom = 16; }
+      else if (frame === 'film') { pTop = 24; pRight = 48; pLeft = 48; pBottom = 24; }
+
+      const photoWidth = width - pLeft - pRight;
+      const photoHeight = photoWidth * 0.75; // 4/3
+      const gap = isSingle ? 0 : 12;
+      const contentHeight = (photoHeight * photos.length) + (gap * (photos.length - 1));
+      const height = contentHeight + pTop + pBottom;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width * 2;
+      canvas.height = height * 2;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('No 2d context');
+      
+      ctx.scale(2, 2); // High DPI
+
+      // 2. Draw Background & Frame
+      if (frame === 'film') {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, width, height);
+        ctx.fillStyle = '#ffffff';
+        for (let i = 0; i < (isSingle ? 4 : 10); i++) {
+          const y = (height / (isSingle ? 4 : 10)) * i + 10;
+          ctx.fillRect(10, y, 16, 24);
+          ctx.fillRect(width - 26, y, 16, 24);
         }
-      });
-      
+      } else if (frame === 'minimal-gold') {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+        ctx.strokeStyle = '#d4af37';
+        ctx.lineWidth = 6;
+        ctx.strokeRect(3, 3, width - 6, height - 6);
+      } else {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+      }
+
+      // 3. Draw Photos
+      for (let i = 0; i < photos.length; i++) {
+        const img = new Image();
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = photos[i];
+        });
+        
+        const py = pTop + (i * (photoHeight + gap));
+        
+        if (filter === 'vintage') ctx.filter = 'sepia(0.6) contrast(1.1) brightness(0.9)';
+        else if (filter === 'bw') ctx.filter = 'grayscale(1) contrast(1.2)';
+        else if (filter === 'vibrant') ctx.filter = 'saturate(1.4) contrast(1.1)';
+        else ctx.filter = 'none';
+
+        ctx.drawImage(img, pLeft, py, photoWidth, photoHeight);
+        ctx.filter = 'none';
+      }
+
+      // 4. Draw Stickers (Native Canvas handles rotation beautifully)
+      for (let s of activeStickers) {
+        if (!s.s.src) continue;
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        await new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = () => resolve(null);
+          // If twemoji, bust cache. If data URI, don't bust.
+          img.src = s.s.src.startsWith('data:') ? s.s.src : s.s.src + "?v=pb1";
+        });
+        
+        const cx = s.x + (s.s.width / 2);
+        const cy = s.y + (s.s.height / 2);
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate((s.r || 0) * Math.PI / 180);
+        ctx.drawImage(img, -s.s.width / 2, -s.s.height / 2, s.s.width, s.s.height);
+        ctx.restore();
+      }
+
+      // 5. Draw Text
+      if (frame === 'polaroid' || frame === 'minimal-gold' || frame === 'soft-glow') {
+         ctx.font = 'bold 36px "Brush Script MT", cursive';
+         ctx.fillStyle = '#d4af37';
+         ctx.textAlign = 'center';
+         const textY = frame === 'polaroid' ? height - 35 : height - 20;
+         
+         ctx.fillStyle = 'rgba(255,255,255,0.9)';
+         const textWidth = 360;
+         ctx.fillRect((width/2) - (textWidth/2), textY - 32, textWidth, 42); // pill background
+         
+         ctx.fillStyle = '#d4af37';
+         ctx.fillText("Zaara's 17th Birthday", width / 2, textY);
+      }
+
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
       savePhotoLocally(dataUrl).catch(e => console.warn("Failed to save to local DB:", e));
-      
-      if (document.head.contains(hideStyle)) document.head.removeChild(hideStyle);
       onComplete(dataUrl);
+
     } catch (err) {
-      console.error("Save Error:", err);
-      if (document.head.contains(hideStyle)) document.head.removeChild(hideStyle);
+      console.error("Manual Canvas Render Error:", err);
       setIsProcessing(false);
       alert("Failed to render photo.");
     }
@@ -307,7 +332,7 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
 
             <div className={`w-full overflow-hidden flex flex-col relative pointer-events-none ${frame === 'soft-glow' ? 'rounded-2xl' : ''}`} style={{ filter: getFilterStyle(), gap: mode === 'STRIP' ? '12px' : '0' }}>
             {photos.map((p, i) => (
-              <PhotoCanvas key={i} src={p} className={`w-full block ${mode === 'STRIP' ? 'aspect-[4/3] rounded-sm' : 'aspect-[4/3]'}`} />
+              <img key={i} src={p} className={`w-full object-cover ${mode === 'STRIP' ? 'aspect-[4/3] rounded-sm' : 'aspect-[4/3]'}`} alt={`Shot ${i}`} />
             ))}
           </div>
 
