@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from 'react';
-import * as htmlToImage from 'html-to-image';
+import html2canvas from 'html2canvas';
 import { Rnd } from 'react-rnd';
 import { Type, Image as ImageIcon, Wand2, Star, Sparkles } from 'lucide-react';
 import { savePhotoLocally } from '../utils/db';
@@ -94,8 +94,8 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
     setActiveStickers(activeStickers.filter(s => s.key !== key));
   };
 
-  const rotateSticker = (key: number, delta: number) => {
-    setActiveStickers(activeStickers.map(s => s.key === key ? { ...s, r: s.r + delta } : s));
+  const setStickerRotation = (key: number, r: number) => {
+    setActiveStickers(prev => prev.map(s => s.key === key ? { ...s, r } : s));
   };
 
   const handleComplete = async () => {
@@ -103,17 +103,20 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
     setIsProcessing(true);
     
     try {
-      const dataUrl = await htmlToImage.toJpeg(captureRef.current, {
-        quality: 0.9,
-        pixelRatio: 1.5,
+      const canvas = await html2canvas(captureRef.current, {
+        scale: 1.5,
         backgroundColor: '#ffffff',
-        filter: (node) => {
-          if (node.classList && node.classList.contains('react-resizable-handle')) return false;
-          if (node.classList && node.classList.contains('sticker-controls')) return false;
-          return true;
+        useCORS: true,
+        ignoreElements: (node) => {
+          if (node.classList && typeof node.classList.contains === 'function') {
+            if (node.classList.contains('react-resizable-handle')) return true;
+            if (node.classList.contains('sticker-controls')) return true;
+          }
+          return false;
         }
       });
       
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
       savePhotoLocally(dataUrl).catch(e => console.warn("Failed to save to local DB:", e));
       onComplete(dataUrl);
     } catch (err) {
@@ -252,11 +255,7 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
 
             <div className={`w-full overflow-hidden flex flex-col relative pointer-events-none ${frame === 'soft-glow' ? 'rounded-2xl' : ''}`} style={{ filter: getFilterStyle(), gap: mode === 'STRIP' ? '12px' : '0' }}>
             {photos.map((p, i) => (
-              <div 
-                key={i} 
-                className={`w-full bg-center bg-cover bg-no-repeat ${mode === 'STRIP' ? 'aspect-[4/3] rounded-sm' : 'aspect-[4/3]'}`} 
-                style={{ backgroundImage: `url(${p})` }} 
-              />
+              <img key={i} src={p} className={`w-full object-cover ${mode === 'STRIP' ? 'aspect-[4/3] rounded-sm' : 'aspect-[4/3]'}`} alt={`Shot ${i}`} />
             ))}
           </div>
 
@@ -280,34 +279,52 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
                   topLeft: { width: '20px', height: '20px', background: '#ff1493', border: '3px solid white', borderRadius: '50%', left: '-10px', top: '-10px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }
                 }}
               >
-                <div className="w-full h-full relative" style={{ transform: `rotate(${sticker.r || 0}deg)`, transition: 'transform 0.1s' }}>
-                  {/* Controls (Always visible on touch, stops drag propagation) */}
-                  <div className="sticker-controls absolute -top-12 left-1/2 transform -translate-x-1/2 flex gap-1 bg-white/95 rounded-full shadow-lg p-1 border border-pink-100 z-50 pointer-events-auto">
-                    <button 
-                      onPointerDown={(e) => { e.stopPropagation(); rotateSticker(sticker.key, -15); }}
-                      className="w-8 h-8 flex items-center justify-center text-pink-500 font-bold hover:bg-pink-50 rounded-full transition-colors"
-                    >
-                      ↺
-                    </button>
-                    <button 
-                      onPointerDown={(e) => { e.stopPropagation(); rotateSticker(sticker.key, 15); }}
-                      className="w-8 h-8 flex items-center justify-center text-pink-500 font-bold hover:bg-pink-50 rounded-full transition-colors"
-                    >
-                      ↻
-                    </button>
-                    <button 
-                      onPointerDown={(e) => { e.stopPropagation(); removeSticker(sticker.key); }}
-                      className="w-8 h-8 flex items-center justify-center text-red-500 font-bold hover:bg-red-50 rounded-full transition-colors text-xl leading-none"
-                    >
-                      ×
-                    </button>
+                <div className="w-full h-full relative">
+                  {/* Rotation handle (at the top center) */}
+                  <div 
+                    className="sticker-controls absolute -top-10 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-white rounded-full shadow-md border-2 border-pink-300 z-50 flex items-center justify-center cursor-grab pointer-events-auto hover:bg-pink-50"
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      const stickerEl = e.currentTarget.parentElement;
+                      if (!stickerEl) return;
+                      const rect = stickerEl.getBoundingClientRect();
+                      const centerX = rect.left + rect.width / 2;
+                      const centerY = rect.top + rect.height / 2;
+
+                      const onMove = (moveEv: PointerEvent) => {
+                        const angle = Math.atan2(moveEv.clientY - centerY, moveEv.clientX - centerX);
+                        const degrees = (angle * 180) / Math.PI + 90; // +90 because handle is at top
+                        setStickerRotation(sticker.key, degrees);
+                      };
+
+                      const onUp = () => {
+                        window.removeEventListener('pointermove', onMove);
+                        window.removeEventListener('pointerup', onUp);
+                      };
+
+                      window.addEventListener('pointermove', onMove);
+                      window.addEventListener('pointerup', onUp);
+                    }}
+                  >
+                    <span className="text-pink-500 font-bold mb-1">↻</span>
                   </div>
+
+                  {/* Delete Button (top right) */}
+                  <button 
+                    onPointerDown={(e) => { e.stopPropagation(); removeSticker(sticker.key); }}
+                    className="sticker-controls absolute -top-4 -right-4 w-8 h-8 bg-white text-red-500 rounded-full shadow-md border border-red-100 flex items-center justify-center z-50 font-bold text-xl leading-none pointer-events-auto hover:bg-red-50"
+                  >
+                    ×
+                  </button>
                   
-                  {sticker.s.src ? 
-                    <img src={sticker.s.src} crossOrigin="anonymous" className="w-full h-full object-contain" alt={sticker.s.name} /> 
-                    : 
-                    <div className="w-full h-full">{sticker.s.content}</div>
-                  }
+                  {/* The rotated content */}
+                  <div className="w-full h-full" style={{ transform: `rotate(${sticker.r || 0}deg)` }}>
+                    {sticker.s.src ? 
+                      <img src={sticker.s.src} crossOrigin="anonymous" className="w-full h-full object-contain" alt={sticker.s.name} /> 
+                      : 
+                      <div className="w-full h-full">{sticker.s.content}</div>
+                    }
+                  </div>
                 </div>
               </Rnd>
             ))}
