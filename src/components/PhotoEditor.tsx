@@ -61,7 +61,7 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
   const [editorTab, setEditorTab] = useState<EditorTab>('STICKERS');
   const [filter, setFilter] = useState<FilterType>('none');
   const [frame, setFrame] = useState<FrameType>('none');
-  const [activeStickers, setActiveStickers] = useState<{id: string, s: StickerDef, key: number, x: number, y: number, r: number}[]>([]);
+  const [activeStickers, setActiveStickers] = useState<{id: string, s: StickerDef, key: number, x: number, y: number, r: number, w: number, h: number}[]>([]);
   const [activeCategory, setActiveCategory] = useState<StickerCategory>('Party');
   const [isProcessing, setIsProcessing] = useState(false);
   const captureRef = useRef<HTMLDivElement>(null);
@@ -74,7 +74,7 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
     const spawnX = mode === 'SINGLE' ? 100 + (stickerCounter % 5) * 20 : 50 + (stickerCounter % 3) * 20;
     const spawnY = mode === 'SINGLE' ? 100 + (stickerCounter % 5) * 20 : Math.max(50, scrollTop + 150) + (stickerCounter % 5) * 20;
 
-    setActiveStickers([...activeStickers, { id: sticker.id, s: sticker, key: stickerCounter, x: spawnX, y: spawnY, r: 0 }]);
+    setActiveStickers([...activeStickers, { id: sticker.id, s: sticker, key: stickerCounter, x: spawnX, y: spawnY, r: 0, w: sticker.width, h: sticker.height }]);
     setStickerCounter(stickerCounter + 1);
   };
 
@@ -84,6 +84,10 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
 
   const setStickerRotation = (key: number, r: number) => {
     setActiveStickers(prev => prev.map(s => s.key === key ? { ...s, r } : s));
+  };
+
+  const updateStickerTransform = (key: number, x: number, y: number, w: number, h: number) => {
+    setActiveStickers(prev => prev.map(s => s.key === key ? { ...s, x, y, w, h } : s));
   };
 
   const handleComplete = async () => {
@@ -167,13 +171,13 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
           img.src = s.s.src.startsWith('data:') ? s.s.src : s.s.src + "?v=pb1";
         });
         
-        const cx = s.x + (s.s.width / 2);
-        const cy = s.y + (s.s.height / 2);
+        const cx = s.x + (s.w / 2);
+        const cy = s.y + (s.h / 2);
 
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate((s.r || 0) * Math.PI / 180);
-        ctx.drawImage(img, -s.s.width / 2, -s.s.height / 2, s.s.width, s.s.height);
+        ctx.drawImage(img, -s.w / 2, -s.h / 2, s.w, s.h);
         ctx.restore();
       }
 
@@ -213,76 +217,68 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
   };
 
   return (
-    <div className="w-full h-full flex flex-row bg-[#fdf2f8] z-50 relative">
-      <div className="w-96 bg-white/95 backdrop-blur-md shadow-[20px_0_40px_-15px_rgba(255,182,193,0.3)] border-r border-pink-100 flex flex-col z-50 overflow-hidden">
-        
-        {/* Editor Tab Navigation */}
-        <div className="flex border-b border-pink-100 bg-pink-50/50 p-2 gap-2">
-          <button onClick={() => setEditorTab('STICKERS')} className={`flex-1 py-3 px-2 rounded-xl text-sm font-bold transition-all flex flex-col items-center gap-1 ${editorTab === 'STICKERS' ? 'bg-white text-pink-600 shadow-sm' : 'text-gray-500 hover:bg-white/50'}`}>
-            <Star size={18} /> Stickers
-          </button>
-          <button onClick={() => setEditorTab('FILTERS')} className={`flex-1 py-3 px-2 rounded-xl text-sm font-bold transition-all flex flex-col items-center gap-1 ${editorTab === 'FILTERS' ? 'bg-white text-pink-600 shadow-sm' : 'text-gray-500 hover:bg-white/50'}`}>
-            <Wand2 size={18} /> Filters
-          </button>
-          <button onClick={() => setEditorTab('FRAMES')} className={`flex-1 py-3 px-2 rounded-xl text-sm font-bold transition-all flex flex-col items-center gap-1 ${editorTab === 'FRAMES' ? 'bg-white text-pink-600 shadow-sm' : 'text-gray-500 hover:bg-white/50'}`}>
-            <ImageIcon size={18} /> Frames
-          </button>
+    <div className="flex flex-col h-full bg-gray-50 max-w-full overflow-hidden">
+      {/* Editor Controls (Fixed Top) */}
+      <div className="flex-none bg-white border-b border-pink-100 z-10 shadow-sm">
+        <div className="flex justify-around p-2">
+          {(['FILTERS', 'FRAMES', 'STICKERS'] as EditorTab[]).map((tab) => (
+            <button key={tab} onClick={() => setEditorTab(tab)}
+              className={`flex-1 py-3 px-2 rounded-xl text-sm font-bold transition-all mx-1 flex flex-col items-center gap-1 ${editorTab === tab ? 'bg-pink-50 text-pink-500 shadow-sm' : 'text-gray-400 hover:bg-gray-50'}`}
+            >
+              {tab === 'FILTERS' && <Wand2 size={20} />}
+              {tab === 'FRAMES' && <ImageIcon size={20} />}
+              {tab === 'STICKERS' && <Star size={20} />}
+              <span>{tab}</span>
+            </button>
+          ))}
         </div>
 
-        {/* Dynamic Content Area (Scrollable) */}
-        <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
-          
+        <div className="p-4 bg-gray-50/50">
+          {/* Controls specific to tabs */}
           {editorTab === 'FILTERS' && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-              <h3 className="text-xl font-cursive text-pink-800 mb-4">Choose a Filter</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {(['none', 'vintage', 'bw', 'vibrant'] as FilterType[]).map(f => (
-                  <button key={f} onClick={() => setFilter(f)}
-                    className={`p-4 rounded-2xl capitalize font-medium transition-all ${filter === f ? 'bg-pink-500 text-white shadow-md scale-105' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'}`}
-                  >
-                    {f === 'bw' ? 'B&W' : f}
-                  </button>
-                ))}
-              </div>
+            <div className="grid grid-cols-4 gap-2">
+              {(['none', 'vintage', 'bw', 'vibrant'] as FilterType[]).map((f) => (
+                <button key={f} onClick={() => setFilter(f)}
+                  className={`py-3 rounded-xl text-sm font-medium transition-all ${filter === f ? 'bg-pink-500 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:border-pink-300'}`}
+                >
+                  {f.charAt(0).toUpperCase() + f.slice(1)}
+                </button>
+              ))}
             </div>
           )}
 
           {editorTab === 'FRAMES' && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-              <h3 className="text-xl font-cursive text-pink-800 mb-4">Choose a Frame</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {(['none', 'polaroid', 'minimal-gold', 'soft-glow', 'film'] as FrameType[]).map(f => (
-                  <button key={f} onClick={() => setFrame(f)}
-                    className={`p-4 rounded-2xl capitalize font-medium transition-all ${frame === f ? 'bg-pink-500 text-white shadow-md scale-105' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'}`}
-                  >
-                    {f.replace('-', ' ')}
-                  </button>
-                ))}
-              </div>
+            <div className="grid grid-cols-5 gap-2">
+              {(['none', 'polaroid', 'minimal-gold', 'soft-glow', 'film'] as FrameType[]).map((f) => (
+                <button key={f} onClick={() => setFrame(f)}
+                  className={`py-3 px-1 rounded-xl text-xs font-medium transition-all ${frame === f ? 'bg-pink-500 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:border-pink-300'}`}
+                >
+                  {f.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                </button>
+              ))}
             </div>
           )}
 
           {editorTab === 'STICKERS' && (
-            <div className="animate-in fade-in slide-in-from-left-4 duration-300 flex flex-col h-full">
-              <div className="flex space-x-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex flex-col gap-3">
+              <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide">
                 {(Object.keys(STICKERS) as StickerCategory[]).map(cat => (
                   <button key={cat} onClick={() => setActiveCategory(cat)}
-                    className={`px-4 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${activeCategory === cat ? 'bg-pink-500 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                    className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all ${activeCategory === cat ? 'bg-pink-100 text-pink-600 border border-pink-200' : 'bg-white text-gray-500 border border-gray-200'}`}
                   >
                     {cat}
                   </button>
                 ))}
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-6 gap-2 max-h-32 overflow-y-auto p-1 scrollbar-hide">
                 {STICKERS[activeCategory].map(s => (
                   <button key={s.id} onClick={() => addSticker(s)}
-                    className="aspect-square bg-gray-50 border border-gray-100 rounded-2xl hover:border-pink-300 hover:shadow-md hover:bg-white flex flex-col items-center justify-center transition-all p-2 group"
+                    className="aspect-square bg-white border border-gray-200 rounded-xl hover:border-pink-400 hover:shadow-md flex flex-col items-center justify-center transition-all p-2 group"
                   >
                     <div className="flex-1 w-full flex items-center justify-center pointer-events-none transform group-hover:scale-110 transition-transform">
-                      <img src={s.src} className="w-12 h-12 object-contain" alt={s.name} />
+                      <img src={s.src} className="w-8 h-8 object-contain" alt={s.name} />
                     </div>
-                    <span className="text-[10px] text-gray-500 font-medium mt-1 uppercase tracking-wider">{s.name}</span>
                   </button>
                 ))}
               </div>
@@ -306,31 +302,31 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
         </div>
       </div>
 
-      <div id="editor-scroll-area" className="flex-1 overflow-y-auto overflow-x-hidden relative scroll-smooth">
-        <div className="min-h-full flex flex-col items-center justify-center py-12 px-4">
-          <div 
-            ref={captureRef}
-            className={`relative bg-white shadow-2xl flex flex-col transition-all duration-300 ${
-              frame === 'polaroid' ? 'p-6 pb-28 border border-gray-100 rounded-sm' : 
-              frame === 'minimal-gold' ? 'p-3 border-[6px] border-[#d4af37] bg-white' : 
-              frame === 'soft-glow' ? 'p-4 bg-white rounded-3xl shadow-[0_0_40px_rgba(255,182,193,0.8)]' : 
-              frame === 'film' ? 'p-6 bg-black border-x-[24px] border-x-gray-900' : 
-              'p-0'
-            }`}
-            style={{ width: mode === 'SINGLE' ? '640px' : '400px' }}
-          >
-            {frame === 'film' && (
-              <div className="absolute inset-y-0 left-[-20px] w-4 flex flex-col justify-around py-4 opacity-50">
-                {[...Array(10)].map((_, i) => <div key={`l-${i}`} className="w-full h-6 bg-white rounded-sm"></div>)}
-              </div>
-            )}
-            {frame === 'film' && (
-              <div className="absolute inset-y-0 right-[-20px] w-4 flex flex-col justify-around py-4 opacity-50">
-                {[...Array(10)].map((_, i) => <div key={`r-${i}`} className="w-full h-6 bg-white rounded-sm"></div>)}
-              </div>
-            )}
+      {/* Main Canvas / Editor Area */}
+      <div id="editor-scroll-area" className="flex-1 overflow-y-auto overflow-x-hidden relative flex flex-col items-center justify-center p-8">
+        <div 
+          ref={captureRef}
+          className={`relative bg-white shadow-2xl flex flex-col transition-all duration-300 ${
+            frame === 'polaroid' ? 'p-6 pb-28 border border-gray-100 rounded-sm' : 
+            frame === 'minimal-gold' ? 'p-3 border-[6px] border-[#d4af37] bg-white' : 
+            frame === 'soft-glow' ? 'p-4 bg-white rounded-3xl shadow-[0_0_40px_rgba(255,182,193,0.8)]' : 
+            frame === 'film' ? 'p-6 bg-black border-x-[24px] border-x-gray-900' : 
+            'p-0'
+          }`}
+          style={{ width: mode === 'SINGLE' ? '640px' : '400px' }}
+        >
+          {frame === 'film' && (
+            <div className="absolute inset-y-0 left-[-20px] w-4 flex flex-col justify-around py-4 opacity-50">
+              {[...Array(10)].map((_, i) => <div key={`l-${i}`} className="w-full h-6 bg-white rounded-sm"></div>)}
+            </div>
+          )}
+          {frame === 'film' && (
+            <div className="absolute inset-y-0 right-[-20px] w-4 flex flex-col justify-around py-4 opacity-50">
+              {[...Array(10)].map((_, i) => <div key={`r-${i}`} className="w-full h-6 bg-white rounded-sm"></div>)}
+            </div>
+          )}
 
-            <div className={`w-full overflow-hidden flex flex-col relative pointer-events-none ${frame === 'soft-glow' ? 'rounded-2xl' : ''}`} style={{ filter: getFilterStyle(), gap: mode === 'STRIP' ? '12px' : '0' }}>
+          <div className={`w-full overflow-hidden flex flex-col relative pointer-events-none ${frame === 'soft-glow' ? 'rounded-2xl' : ''}`} style={{ filter: getFilterStyle(), gap: mode === 'STRIP' ? '12px' : '0' }}>
             {photos.map((p, i) => (
               <img key={i} src={p} className={`w-full object-cover ${mode === 'STRIP' ? 'aspect-[4/3] rounded-sm' : 'aspect-[4/3]'}`} alt={`Shot ${i}`} />
             ))}
@@ -343,8 +339,12 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
                 default={{
                   x: sticker.x,
                   y: sticker.y,
-                  width: sticker.s.width,
-                  height: sticker.s.height
+                  width: sticker.w,
+                  height: sticker.h
+                }}
+                onDragStop={(e, d) => updateStickerTransform(sticker.key, d.x, d.y, sticker.w, sticker.h)}
+                onResizeStop={(e, direction, ref, delta, position) => {
+                  updateStickerTransform(sticker.key, position.x, position.y, parseInt(ref.style.width, 10), parseInt(ref.style.height, 10));
                 }}
                 bounds="parent"
                 className={`pointer-events-auto group rnd-${sticker.key}`}
@@ -410,7 +410,6 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
           )}
         </div>
       </div>
-    </div>
     </div>
   );
 }
