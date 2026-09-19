@@ -217,68 +217,75 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 max-w-full overflow-hidden">
-      {/* Editor Controls (Fixed Top) */}
-      <div className="flex-none bg-white border-b border-pink-100 z-10 shadow-sm">
-        <div className="flex justify-around p-2">
-          {(['FILTERS', 'FRAMES', 'STICKERS'] as EditorTab[]).map((tab) => (
-            <button key={tab} onClick={() => setEditorTab(tab)}
-              className={`flex-1 py-3 px-2 rounded-xl text-sm font-bold transition-all mx-1 flex flex-col items-center gap-1 ${editorTab === tab ? 'bg-pink-50 text-pink-500 shadow-sm' : 'text-gray-400 hover:bg-gray-50'}`}
-            >
-              {tab === 'FILTERS' && <Wand2 size={20} />}
-              {tab === 'FRAMES' && <ImageIcon size={20} />}
-              {tab === 'STICKERS' && <Star size={20} />}
-              <span>{tab}</span>
-            </button>
-          ))}
+    <div className="w-full h-full flex flex-row bg-[#fdf2f8] z-50 relative">
+      <div className="w-96 bg-white/95 backdrop-blur-md shadow-[20px_0_40px_-15px_rgba(255,182,193,0.3)] border-r border-pink-100 flex flex-col z-50 overflow-hidden">
+        
+        {/* Editor Tab Navigation */}
+        <div className="flex border-b border-pink-100 bg-pink-50/50 p-2 gap-2">
+          <button onClick={() => setEditorTab('STICKERS')} className={`flex-1 py-3 px-2 rounded-xl text-sm font-bold transition-all flex flex-col items-center gap-1 ${editorTab === 'STICKERS' ? 'bg-white text-pink-600 shadow-sm' : 'text-gray-500 hover:bg-white/50'}`}>
+            <Star size={18} /> Stickers
+          </button>
+          <button onClick={() => setEditorTab('FILTERS')} className={`flex-1 py-3 px-2 rounded-xl text-sm font-bold transition-all flex flex-col items-center gap-1 ${editorTab === 'FILTERS' ? 'bg-white text-pink-600 shadow-sm' : 'text-gray-500 hover:bg-white/50'}`}>
+            <Wand2 size={18} /> Filters
+          </button>
+          <button onClick={() => setEditorTab('FRAMES')} className={`flex-1 py-3 px-2 rounded-xl text-sm font-bold transition-all flex flex-col items-center gap-1 ${editorTab === 'FRAMES' ? 'bg-white text-pink-600 shadow-sm' : 'text-gray-500 hover:bg-white/50'}`}>
+            <ImageIcon size={18} /> Frames
+          </button>
         </div>
 
-        <div className="p-4 bg-gray-50/50">
-          {/* Controls specific to tabs */}
+        {/* Dynamic Content Area (Scrollable) */}
+        <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
           {editorTab === 'FILTERS' && (
-            <div className="grid grid-cols-4 gap-2">
-              {(['none', 'vintage', 'bw', 'vibrant'] as FilterType[]).map((f) => (
-                <button key={f} onClick={() => setFilter(f)}
-                  className={`py-3 rounded-xl text-sm font-medium transition-all ${filter === f ? 'bg-pink-500 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:border-pink-300'}`}
-                >
-                  {f.charAt(0).toUpperCase() + f.slice(1)}
-                </button>
-              ))}
+            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+              <h3 className="text-xl font-cursive text-pink-800 mb-4">Choose a Filter</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {(['none', 'vintage', 'bw', 'vibrant'] as FilterType[]).map((f) => (
+                  <button key={f} onClick={() => setFilter(f)}
+                    className={`p-4 rounded-2xl capitalize font-medium transition-all ${filter === f ? 'bg-pink-500 text-white shadow-md scale-105' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'}`}
+                  >
+                    {f === 'bw' ? 'B&W' : f}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
           {editorTab === 'FRAMES' && (
-            <div className="grid grid-cols-5 gap-2">
-              {(['none', 'polaroid', 'minimal-gold', 'soft-glow', 'film'] as FrameType[]).map((f) => (
-                <button key={f} onClick={() => setFrame(f)}
-                  className={`py-3 px-1 rounded-xl text-xs font-medium transition-all ${frame === f ? 'bg-pink-500 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:border-pink-300'}`}
-                >
-                  {f.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                </button>
-              ))}
+            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+              <h3 className="text-xl font-cursive text-pink-800 mb-4">Choose a Frame</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {(['none', 'polaroid', 'minimal-gold', 'soft-glow', 'film'] as FrameType[]).map((f) => (
+                  <button key={f} onClick={() => setFrame(f)}
+                    className={`p-4 rounded-2xl capitalize font-medium transition-all ${frame === f ? 'bg-pink-500 text-white shadow-md scale-105' : 'bg-pink-50 text-pink-700 hover:bg-pink-100'}`}
+                  >
+                    {f.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
           {editorTab === 'STICKERS' && (
-            <div className="flex flex-col gap-3">
-              <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide">
+            <div className="animate-in fade-in slide-in-from-left-4 duration-300 flex flex-col h-full">
+              <div className="flex space-x-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
                 {(Object.keys(STICKERS) as StickerCategory[]).map(cat => (
                   <button key={cat} onClick={() => setActiveCategory(cat)}
-                    className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all ${activeCategory === cat ? 'bg-pink-100 text-pink-600 border border-pink-200' : 'bg-white text-gray-500 border border-gray-200'}`}
+                    className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all ${activeCategory === cat ? 'bg-pink-500 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                   >
                     {cat}
                   </button>
                 ))}
               </div>
 
-              <div className="grid grid-cols-6 gap-2 max-h-32 overflow-y-auto p-1 scrollbar-hide">
+              <div className="grid grid-cols-3 gap-3">
                 {STICKERS[activeCategory].map(s => (
                   <button key={s.id} onClick={() => addSticker(s)}
-                    className="aspect-square bg-white border border-gray-200 rounded-xl hover:border-pink-400 hover:shadow-md flex flex-col items-center justify-center transition-all p-2 group"
+                    className="aspect-square bg-white border border-gray-100 rounded-2xl hover:border-pink-300 hover:shadow-md hover:bg-pink-50 flex flex-col items-center justify-center transition-all p-2 group"
                   >
                     <div className="flex-1 w-full flex items-center justify-center pointer-events-none transform group-hover:scale-110 transition-transform">
-                      <img src={s.src} className="w-8 h-8 object-contain" alt={s.name} />
+                      <img src={s.src} className="w-12 h-12 object-contain" alt={s.name} />
                     </div>
+                    <span className="text-[10px] text-gray-500 font-medium mt-1 uppercase tracking-wider">{s.name}</span>
                   </button>
                 ))}
               </div>
