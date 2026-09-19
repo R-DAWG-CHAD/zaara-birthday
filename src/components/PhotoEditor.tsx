@@ -298,5 +298,6 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
         </div>
       </div>
     </div>
+    </div>
   );
 }
