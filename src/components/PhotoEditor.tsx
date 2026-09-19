@@ -149,14 +149,62 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
         });
         
         const py = pTop + (i * (photoHeight + gap));
-        
-        if (filter === 'vintage') ctx.filter = 'sepia(0.6) contrast(1.1) brightness(0.9)';
-        else if (filter === 'bw') ctx.filter = 'grayscale(1) contrast(1.2)';
-        else if (filter === 'vibrant') ctx.filter = 'saturate(1.4) contrast(1.1)';
-        else ctx.filter = 'none';
 
-        ctx.drawImage(img, pLeft, py, photoWidth, photoHeight);
-        ctx.filter = 'none';
+        if (filter !== 'none') {
+          // Off-screen canvas to apply manual pixel manipulation
+          const tempCanvas = document.createElement('canvas');
+          const tw = photoWidth * 2;
+          const th = photoHeight * 2;
+          tempCanvas.width = tw;
+          tempCanvas.height = th;
+          const tCtx = tempCanvas.getContext('2d');
+          
+          if (tCtx) {
+            tCtx.drawImage(img, 0, 0, tw, th);
+            const imgData = tCtx.getImageData(0, 0, tw, th);
+            const d = imgData.data;
+            
+            for (let j = 0; j < d.length; j += 4) {
+              let r = d[j], g = d[j+1], b = d[j+2];
+              
+              if (filter === 'bw') {
+                let v = r * 0.299 + g * 0.587 + b * 0.114;
+                v = ((v / 255 - 0.5) * 1.2 + 0.5) * 255;
+                d[j] = d[j+1] = d[j+2] = Math.max(0, Math.min(255, v));
+              } 
+              else if (filter === 'vintage') {
+                let tr = (r * 0.393) + (g * 0.769) + (b * 0.189);
+                let tg = (r * 0.349) + (g * 0.686) + (b * 0.168);
+                let tb = (r * 0.272) + (g * 0.534) + (b * 0.131);
+                r = r * 0.4 + tr * 0.6;
+                g = g * 0.4 + tg * 0.6;
+                b = b * 0.4 + tb * 0.6;
+                r = ((r / 255 - 0.5) * 1.1 + 0.5) * 255 * 0.9;
+                g = ((g / 255 - 0.5) * 1.1 + 0.5) * 255 * 0.9;
+                b = ((b / 255 - 0.5) * 1.1 + 0.5) * 255 * 0.9;
+                d[j] = Math.max(0, Math.min(255, r));
+                d[j+1] = Math.max(0, Math.min(255, g));
+                d[j+2] = Math.max(0, Math.min(255, b));
+              } 
+              else if (filter === 'vibrant') {
+                let lum = r * 0.299 + g * 0.587 + b * 0.114;
+                r = lum + 1.4 * (r - lum);
+                g = lum + 1.4 * (g - lum);
+                b = lum + 1.4 * (b - lum);
+                r = ((r / 255 - 0.5) * 1.1 + 0.5) * 255;
+                g = ((g / 255 - 0.5) * 1.1 + 0.5) * 255;
+                b = ((b / 255 - 0.5) * 1.1 + 0.5) * 255;
+                d[j] = Math.max(0, Math.min(255, r));
+                d[j+1] = Math.max(0, Math.min(255, g));
+                d[j+2] = Math.max(0, Math.min(255, b));
+              }
+            }
+            tCtx.putImageData(imgData, 0, 0);
+            ctx.drawImage(tempCanvas, pLeft, py, photoWidth, photoHeight);
+          }
+        } else {
+          ctx.drawImage(img, pLeft, py, photoWidth, photoHeight);
+        }
       }
 
       // 4. Draw Stickers (Native Canvas handles rotation beautifully)
