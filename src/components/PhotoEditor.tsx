@@ -256,13 +256,13 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
             <div className="absolute inset-0 z-20 overflow-visible pointer-events-none">
               {activeStickers.map(sticker => (
                 <Rnd
-                  key={sticker.key}
-                  default={{
-                    x: sticker.x,
-                    y: sticker.y,
-                    width: sticker.s.width,
-                    height: sticker.s.height
-                  }}
+                key={sticker.key}
+                default={{
+                  x: sticker.x,
+                  y: sticker.y,
+                  width: sticker.s.width,
+                  height: sticker.s.height
+                }}
                 bounds="parent"
                 className="pointer-events-auto group"
                 lockAspectRatio
@@ -274,17 +274,18 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
                 }}
               >
                 <div className="w-full h-full relative">
-                  {/* Delete Button (appears on hover/active) */}
+                  {/* Delete Button (Always visible on touch, stops drag propagation) */}
                   <button 
-                    onClick={() => removeSticker(sticker.key)}
-                    className="sticker-remove-btn absolute -top-4 -right-4 w-8 h-8 bg-white text-red-500 rounded-full shadow-md border border-gray-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-50 font-bold"
+                    onPointerDown={(e) => { e.stopPropagation(); removeSticker(sticker.key); }}
+                    onClick={(e) => { e.stopPropagation(); removeSticker(sticker.key); }}
+                    className="sticker-remove-btn absolute -top-4 -right-4 w-8 h-8 bg-white text-red-500 rounded-full shadow-md border border-red-100 flex items-center justify-center z-50 font-bold text-xl leading-none"
                   >
                     ×
                   </button>
                   {sticker.s.src ? 
-                    <img src={sticker.s.src} className="w-full h-full object-contain filter drop-shadow-md" alt={sticker.s.name} /> 
+                    <img src={sticker.s.src} crossOrigin="anonymous" className="w-full h-full object-contain" alt={sticker.s.name} /> 
                     : 
-                    <div className="w-full h-full filter drop-shadow-md">{sticker.s.content}</div>
+                    <div className="w-full h-full">{sticker.s.content}</div>
                   }
                 </div>
               </Rnd>
