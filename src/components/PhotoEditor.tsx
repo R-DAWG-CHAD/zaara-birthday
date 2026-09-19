@@ -72,7 +72,7 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
   const [editorTab, setEditorTab] = useState<EditorTab>('STICKERS');
   const [filter, setFilter] = useState<FilterType>('none');
   const [frame, setFrame] = useState<FrameType>('none');
-  const [activeStickers, setActiveStickers] = useState<{id: string, s: StickerDef, key: number, x: number, y: number}[]>([]);
+  const [activeStickers, setActiveStickers] = useState<{id: string, s: StickerDef, key: number, x: number, y: number, r: number}[]>([]);
   const [activeCategory, setActiveCategory] = useState<StickerCategory>('Party');
   const [isProcessing, setIsProcessing] = useState(false);
   const captureRef = useRef<HTMLDivElement>(null);
@@ -86,7 +86,7 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
     const spawnX = mode === 'SINGLE' ? 100 + (stickerCounter % 5) * 20 : 50 + (stickerCounter % 3) * 20;
     const spawnY = mode === 'SINGLE' ? 100 + (stickerCounter % 5) * 20 : Math.max(50, scrollTop + 150) + (stickerCounter % 5) * 20;
 
-    setActiveStickers([...activeStickers, { id: sticker.id, s: sticker, key: stickerCounter, x: spawnX, y: spawnY }]);
+    setActiveStickers([...activeStickers, { id: sticker.id, s: sticker, key: stickerCounter, x: spawnX, y: spawnY, r: 0 }]);
     setStickerCounter(stickerCounter + 1);
   };
 
@@ -94,23 +94,24 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
     setActiveStickers(activeStickers.filter(s => s.key !== key));
   };
 
+  const rotateSticker = (key: number, delta: number) => {
+    setActiveStickers(activeStickers.map(s => s.key === key ? { ...s, r: s.r + delta } : s));
+  };
+
   const handleComplete = async () => {
     if (!captureRef.current) return;
     setIsProcessing(true);
     
-    // Hide resize handles and remove buttons for screenshot
-    const elementsToHide = document.querySelectorAll('.react-resizable-handle, .sticker-remove-btn');
-    elementsToHide.forEach(h => (h as HTMLElement).style.display = 'none');
-    
     try {
-      // Short delay so React applies the display:none properly before render
-      await new Promise(resolve => setTimeout(resolve, 100));
-
       const dataUrl = await htmlToImage.toJpeg(captureRef.current, {
         quality: 0.9,
         pixelRatio: 1.5,
         backgroundColor: '#ffffff',
-        cacheBust: true
+        filter: (node) => {
+          if (node.classList && node.classList.contains('react-resizable-handle')) return false;
+          if (node.classList && node.classList.contains('sticker-controls')) return false;
+          return true;
+        }
       });
       
       savePhotoLocally(dataUrl).catch(e => console.warn("Failed to save to local DB:", e));
@@ -119,7 +120,6 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
       console.error("Save Error:", err);
       setIsProcessing(false);
       alert("Failed to render photo.");
-      elementsToHide.forEach(h => (h as HTMLElement).style.display = 'block');
     }
   };
 
@@ -251,14 +251,18 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
             )}
 
             <div className={`w-full overflow-hidden flex flex-col relative pointer-events-none ${frame === 'soft-glow' ? 'rounded-2xl' : ''}`} style={{ filter: getFilterStyle(), gap: mode === 'STRIP' ? '12px' : '0' }}>
-              {photos.map((p, i) => (
-                <img key={i} src={p} className={`w-full object-cover ${mode === 'STRIP' ? 'aspect-[4/3] rounded-sm' : 'aspect-[4/3]'}`} alt={`Shot ${i}`} />
-              ))}
-            </div>
+            {photos.map((p, i) => (
+              <div 
+                key={i} 
+                className={`w-full bg-center bg-cover bg-no-repeat ${mode === 'STRIP' ? 'aspect-[4/3] rounded-sm' : 'aspect-[4/3]'}`} 
+                style={{ backgroundImage: `url(${p})` }} 
+              />
+            ))}
+          </div>
 
-            <div className="absolute inset-0 z-20 overflow-visible pointer-events-none">
-              {activeStickers.map(sticker => (
-                <Rnd
+          <div className="absolute inset-0 z-20 overflow-visible pointer-events-none">
+            {activeStickers.map(sticker => (
+              <Rnd
                 key={sticker.key}
                 default={{
                   x: sticker.x,
@@ -276,15 +280,29 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
                   topLeft: { width: '20px', height: '20px', background: '#ff1493', border: '3px solid white', borderRadius: '50%', left: '-10px', top: '-10px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }
                 }}
               >
-                <div className="w-full h-full relative">
-                  {/* Delete Button (Always visible on touch, stops drag propagation) */}
-                  <button 
-                    onPointerDown={(e) => { e.stopPropagation(); removeSticker(sticker.key); }}
-                    onClick={(e) => { e.stopPropagation(); removeSticker(sticker.key); }}
-                    className="sticker-remove-btn absolute -top-4 -right-4 w-8 h-8 bg-white text-red-500 rounded-full shadow-md border border-red-100 flex items-center justify-center z-50 font-bold text-xl leading-none"
-                  >
-                    ×
-                  </button>
+                <div className="w-full h-full relative" style={{ transform: `rotate(${sticker.r || 0}deg)`, transition: 'transform 0.1s' }}>
+                  {/* Controls (Always visible on touch, stops drag propagation) */}
+                  <div className="sticker-controls absolute -top-12 left-1/2 transform -translate-x-1/2 flex gap-1 bg-white/95 rounded-full shadow-lg p-1 border border-pink-100 z-50 pointer-events-auto">
+                    <button 
+                      onPointerDown={(e) => { e.stopPropagation(); rotateSticker(sticker.key, -15); }}
+                      className="w-8 h-8 flex items-center justify-center text-pink-500 font-bold hover:bg-pink-50 rounded-full transition-colors"
+                    >
+                      ↺
+                    </button>
+                    <button 
+                      onPointerDown={(e) => { e.stopPropagation(); rotateSticker(sticker.key, 15); }}
+                      className="w-8 h-8 flex items-center justify-center text-pink-500 font-bold hover:bg-pink-50 rounded-full transition-colors"
+                    >
+                      ↻
+                    </button>
+                    <button 
+                      onPointerDown={(e) => { e.stopPropagation(); removeSticker(sticker.key); }}
+                      className="w-8 h-8 flex items-center justify-center text-red-500 font-bold hover:bg-red-50 rounded-full transition-colors text-xl leading-none"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  
                   {sticker.s.src ? 
                     <img src={sticker.s.src} crossOrigin="anonymous" className="w-full h-full object-contain" alt={sticker.s.name} /> 
                     : 

@@ -46,11 +46,11 @@ export default function GalleryView({ onClose }: GalleryViewProps) {
       ) : (
         <div className="columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6 pb-20">
           {photos.map((photo) => (
-            <div key={photo.id} className="break-inside-avoid bg-white p-3 rounded-2xl shadow-lg border border-pink-100 hover:shadow-xl transition-shadow transform hover:-translate-y-1 relative group">
+            <div key={photo.id} className="break-inside-avoid bg-white p-3 rounded-2xl shadow-lg border border-pink-100 relative group">
               <img src={photo.dataUrl} alt="Gallery" className="w-full h-auto rounded-lg" />
               <button 
                 onClick={() => handleDelete(photo.id)}
-                className="absolute top-6 right-6 p-3 bg-white/90 text-red-500 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+                className="absolute top-6 right-6 p-3 bg-white/95 text-red-500 rounded-full shadow-lg border border-red-100 z-10 font-bold active:scale-95 transition-transform"
               >
                 <Trash2 size={24} />
               </button>
