@@ -102,25 +102,32 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
     if (!captureRef.current) return;
     setIsProcessing(true);
     
+    // Create a strict stylesheet to hide all controls before snapshotting
+    const hideStyle = document.createElement('style');
+    hideStyle.innerHTML = `
+      .react-resizable-handle { display: none !important; opacity: 0 !important; }
+      .sticker-controls { display: none !important; opacity: 0 !important; }
+    `;
+    document.head.appendChild(hideStyle);
+    
     try {
+      // Wait for browser paint
+      await new Promise(resolve => setTimeout(resolve, 50));
+
       const canvas = await html2canvas(captureRef.current, {
         scale: 1.5,
         backgroundColor: '#ffffff',
-        useCORS: true,
-        ignoreElements: (node) => {
-          if (node.classList && typeof node.classList.contains === 'function') {
-            if (node.classList.contains('react-resizable-handle')) return true;
-            if (node.classList.contains('sticker-controls')) return true;
-          }
-          return false;
-        }
+        useCORS: true
       });
       
       const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
       savePhotoLocally(dataUrl).catch(e => console.warn("Failed to save to local DB:", e));
+      
+      if (document.head.contains(hideStyle)) document.head.removeChild(hideStyle);
       onComplete(dataUrl);
     } catch (err) {
       console.error("Save Error:", err);
+      if (document.head.contains(hideStyle)) document.head.removeChild(hideStyle);
       setIsProcessing(false);
       alert("Failed to render photo.");
     }
@@ -273,18 +280,16 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
                 className={`pointer-events-auto group rnd-${sticker.key}`}
                 cancel=".sticker-controls"
                 lockAspectRatio
+                enable={{ bottomRight: true, bottomLeft: false, topRight: false, topLeft: false, right: false, left: false, top: false, bottom: false }}
                 resizeHandleStyles={{
-                  bottomRight: { width: '20px', height: '20px', background: '#ff1493', border: '3px solid white', borderRadius: '50%', right: '-10px', bottom: '-10px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' },
-                  bottomLeft: { width: '20px', height: '20px', background: '#ff1493', border: '3px solid white', borderRadius: '50%', left: '-10px', bottom: '-10px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' },
-                  topRight: { width: '20px', height: '20px', background: '#ff1493', border: '3px solid white', borderRadius: '50%', right: '-10px', top: '-10px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' },
-                  topLeft: { width: '20px', height: '20px', background: '#ff1493', border: '3px solid white', borderRadius: '50%', left: '-10px', top: '-10px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }
+                  bottomRight: { width: '26px', height: '26px', background: '#ff1493', border: '3px solid white', borderRadius: '50%', right: '-13px', bottom: '-13px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }
                 }}
               >
                 <div className="w-full h-full relative" style={{ transform: `rotate(${sticker.r || 0}deg)` }}>
                   
                   {/* Rotation handle */}
                   <div 
-                    className="sticker-controls absolute -top-10 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-white rounded-full shadow-md border-2 border-pink-300 z-50 flex items-center justify-center cursor-grab pointer-events-auto hover:bg-pink-50"
+                    className="sticker-controls absolute -top-12 left-1/2 transform -translate-x-1/2 w-10 h-10 bg-white rounded-full shadow-md border-2 border-pink-300 z-50 flex items-center justify-center cursor-grab pointer-events-auto hover:bg-pink-50"
                     onPointerDown={(e) => {
                       e.stopPropagation();
                       const rndEl = document.querySelector(`.rnd-${sticker.key}`);
@@ -308,13 +313,13 @@ export default function PhotoEditor({ photos, mode, onComplete, onCancel }: Phot
                       window.addEventListener('pointerup', onUp);
                     }}
                   >
-                    <span className="text-pink-500 font-bold mb-1 pointer-events-none">↻</span>
+                    <span className="text-pink-500 font-bold text-lg mb-1 pointer-events-none">↻</span>
                   </div>
 
                   {/* Delete Button */}
                   <button 
                     onPointerDown={(e) => { e.stopPropagation(); removeSticker(sticker.key); }}
-                    className="sticker-controls absolute -top-4 -right-4 w-8 h-8 bg-white text-red-500 rounded-full shadow-md border border-red-100 flex items-center justify-center z-50 font-bold text-xl leading-none pointer-events-auto hover:bg-red-50"
+                    className="sticker-controls absolute -top-5 -right-5 w-10 h-10 bg-white text-red-500 rounded-full shadow-md border border-red-100 flex items-center justify-center z-50 font-bold text-2xl leading-none pointer-events-auto hover:bg-red-50"
                   >
                     ×
                   </button>
